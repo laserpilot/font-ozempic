@@ -14,11 +14,11 @@ let modeSelector;
 
 // Positioning controls
 let xOffsetSlider, yOffsetSlider, fontSizeSlider, letterSpacingSlider, lineSpacingSlider;
-let characterOffsetSlider, characterThresholdSlider;
+let textAlignmentSelector, autoCenterStrengthSlider;
 let xOffset = 9, yOffset = 0, fontScale = 1.0; // Scale factor as percentage
 let letterSpacing = 1.0, lineSpacing = 1.0; // Multipliers for spacing
-let characterOffsetBase = -2.5; // Base offset per character
-let characterThreshold = 10; // Characters threshold for different offset behavior
+let textAlignment = 'left'; // 'left', 'center', 'right'
+let autoCenterStrength = 50; // 0-100 percentage for alignment strength
 let zoomLevel = 1.0; // SVG zoom level
 let zoomSlider;
 
@@ -121,11 +121,30 @@ function setup() {
   fontSelector.style('width', '100%');
   fontSelector.style('margin-bottom', '15px');
   
-  // Positioning controls section
-  let positionLabel = createP('Position Adjustments:');
-  positionLabel.parent(controlsDiv);
-  positionLabel.style('margin', '0 0 10px 0');
-  positionLabel.style('font-weight', 'bold');
+  // Text Alignment section
+  let alignmentSectionLabel = createP('Text Alignment:');
+  alignmentSectionLabel.parent(controlsDiv);
+  alignmentSectionLabel.style('margin', '0 0 10px 0');
+  alignmentSectionLabel.style('font-weight', 'bold');
+  
+  // Text Alignment selector
+  let alignmentLabel = createP('Alignment:');
+  alignmentLabel.parent(controlsDiv);
+  alignmentLabel.style('margin', '0 0 5px 0');
+  alignmentLabel.style('font-size', '13px');
+  
+  textAlignmentSelector = createSelect();
+  textAlignmentSelector.parent(controlsDiv);
+  textAlignmentSelector.option('Left', 'left');
+  textAlignmentSelector.option('Center', 'center');
+  textAlignmentSelector.option('Right', 'right');
+  textAlignmentSelector.selected('left');
+  textAlignmentSelector.changed(() => {
+    textAlignment = textAlignmentSelector.value();
+    updateDisplay();
+  });
+  textAlignmentSelector.style('width', '100%');
+  textAlignmentSelector.style('margin-bottom', '8px');
   
   // Helper function to create labeled slider
   function createLabeledSlider(parent, label, min, max, defaultVal, step, updateFunc) {
@@ -155,6 +174,26 @@ function setup() {
     return slider;
   }
   
+  // Auto-Center Strength slider
+  autoCenterStrengthSlider = createLabeledSlider(controlsDiv, 'Align Strength', 0, 100, 50, 5, (slider, value) => {
+    autoCenterStrength = slider.value();
+    value.html(autoCenterStrength + '%');
+    updateDisplay();
+  });
+  
+  let alignmentInfo = createP('(Controls how text is positioned relative to its original location)');
+  alignmentInfo.parent(controlsDiv);
+  alignmentInfo.style('font-size', '11px');
+  alignmentInfo.style('color', '#666');
+  alignmentInfo.style('margin', '0 0 15px 0');
+  alignmentInfo.style('line-height', '1.3');
+  
+  // Position Fine-tuning section
+  let positionLabel = createP('Position Fine-tuning:');
+  positionLabel.parent(controlsDiv);
+  positionLabel.style('margin', '0 0 10px 0');
+  positionLabel.style('font-weight', 'bold');
+  
   // X Offset slider
   xOffsetSlider = createLabeledSlider(controlsDiv, 'X Offset', -200, 200, 9, 1, (slider, value) => {
     xOffset = slider.value();
@@ -169,6 +208,12 @@ function setup() {
     updateDisplay();
   });
   
+  // Typography section
+  let typographyLabel = createP('Typography:');
+  typographyLabel.parent(controlsDiv);
+  typographyLabel.style('margin', '15px 0 10px 0');
+  typographyLabel.style('font-weight', 'bold');
+  
   // Font Scale slider
   fontSizeSlider = createLabeledSlider(controlsDiv, 'Font Scale', 0.1, 2.0, 1.0, 0.1, (slider, value) => {
     fontScale = slider.value();
@@ -176,11 +221,7 @@ function setup() {
     updateDisplay();
   });
 
-  // Spacing controls section
-  let spacingLabel = createP('Spacing Controls:');
-  spacingLabel.parent(controlsDiv);
-  spacingLabel.style('margin', '15px 0 10px 0');
-  spacingLabel.style('font-weight', 'bold');
+  // Letter and Line spacing (part of typography)
   
   // Letter Spacing slider
   letterSpacingSlider = createLabeledSlider(controlsDiv, 'Letter Space', 0.1, 3.0, 1.0, 0.1, (slider, value) => {
@@ -196,32 +237,7 @@ function setup() {
     updateDisplay();
   });
   
-  // Character Offset slider
-  characterOffsetSlider = createLabeledSlider(controlsDiv, 'Char Offset', -10.0, 2.0, -2.5, 0.5, (slider, value) => {
-    characterOffsetBase = slider.value();
-    value.html(characterOffsetBase.toFixed(1));
-    updateDisplay();
-  });
-
-  // Advanced controls section
-  let advancedLabel = createP('Advanced Controls:');
-  advancedLabel.parent(controlsDiv);
-  advancedLabel.style('margin', '15px 0 10px 0');
-  advancedLabel.style('font-weight', 'bold');
-  
-  // Character Threshold slider
-  characterThresholdSlider = createLabeledSlider(controlsDiv, 'Char Threshold', 3, 20, 10, 1, (slider, value) => {
-    characterThreshold = slider.value();
-    value.html(characterThreshold + ' chars');
-    updateDisplay();
-  });
-  
-  let thresholdInfo = createP('(Text longer than threshold gets character offset applied)');
-  thresholdInfo.parent(controlsDiv);
-  thresholdInfo.style('font-size', '11px');
-  thresholdInfo.style('color', '#666');
-  thresholdInfo.style('margin', '0 0 10px 0');
-  thresholdInfo.style('line-height', '1.3');
+  // Remove advanced controls section since we simplified the interface
 
   // Display controls section
   let displayLabel = createP('Display Controls:');
@@ -458,10 +474,9 @@ function generateConvertedSvg() {
   let pathsGenerated = 0;
   textElements.forEach((textEl, index) => {
     if (textEl.content && textEl.content.trim() !== "") {
-      // Apply consistent offset logic using slider values
-      const characterOffset = textEl.content.length > characterThreshold ? 
-        textEl.content.length * characterOffsetBase : 0;
-      const adjustedX = textEl.x + xOffset + characterOffset;
+      // Apply alignment-based positioning
+      const alignmentOffset = calculateAlignmentOffset(textEl, textAlignment, autoCenterStrength);
+      const adjustedX = textEl.x + xOffset + alignmentOffset;
       
       // Apply line spacing: calculate relative position from first line
       const relativeY = textEl.y - baseY;
@@ -497,6 +512,24 @@ function generateConvertedSvg() {
   
   const serializer = new XMLSerializer();
   return serializer.serializeToString(svgDoc);
+}
+
+// Helper function to calculate alignment offset based on text properties
+function calculateAlignmentOffset(textEl, alignment, strength) {
+  let alignmentOffset = 0;
+  
+  if (alignment === 'center') {
+    // Estimate text width based on content length and font size
+    const estimatedWidth = textEl.content.length * (textEl.fontSize * 0.6);
+    alignmentOffset = -(estimatedWidth / 2) * (strength / 100);
+  } else if (alignment === 'right') {
+    // Estimate text width for right alignment
+    const estimatedWidth = textEl.content.length * (textEl.fontSize * 0.6);
+    alignmentOffset = -estimatedWidth * (strength / 100);
+  }
+  // 'left' alignment needs no offset
+  
+  return alignmentOffset;
 }
 
 // Helper function to get combined transform from element and all parent groups
@@ -682,10 +715,9 @@ function saveSvgWithFont() {
     if (textEl.content && textEl.content.trim() !== "") {
       console.log(`Converting text element ${index + 1}: "${textEl.content}"`);
       
-      // Apply consistent offset logic using slider values (same as preview)
-      const characterOffset = textEl.content.length > characterThreshold ? 
-        textEl.content.length * characterOffsetBase : 0;
-      const adjustedX = textEl.x + xOffset + characterOffset;
+      // Apply alignment-based positioning (same as preview)
+      const alignmentOffset = calculateAlignmentOffset(textEl, textAlignment, autoCenterStrength);
+      const adjustedX = textEl.x + xOffset + alignmentOffset;
       
       // Apply line spacing: calculate relative position from first line
       const relativeY = textEl.y - baseY;
@@ -699,7 +731,7 @@ function saveSvgWithFont() {
         path.setAttribute("d", pathData);
         path.setAttribute("class", `converted-text-${index}`);
         path.setAttribute("data-original-text", textEl.content);
-        path.setAttribute("data-adjustments", `x:${xOffset},y:${yOffset},scale:${fontScale},letterSpacing:${letterSpacing},lineSpacing:${lineSpacing},charOffset:${characterOffsetBase}`);
+        path.setAttribute("data-adjustments", `x:${xOffset},y:${yOffset},scale:${fontScale},letterSpacing:${letterSpacing},lineSpacing:${lineSpacing},alignment:${textAlignment},alignStrength:${autoCenterStrength}`);
         convertedGroup.appendChild(path);
         pathsCreated++;
         console.log(`Created path for: "${textEl.content}" at (${adjustedX}, ${adjustedY})`);
@@ -735,7 +767,7 @@ function saveSvgWithFont() {
   URL.revokeObjectURL(url);
   
   console.log("SVG export completed");
-  alert(`Exported SVG with ${pathsCreated} converted text elements using ${fontSelector.value()}\nAdjustments: X:${xOffset}, Y:${yOffset}, Scale:${(fontScale * 100).toFixed(0)}%\nSpacing: Letter:${letterSpacing.toFixed(1)}x, Line:${lineSpacing.toFixed(1)}x\nChar Offset: ${characterOffsetBase.toFixed(1)} per character`);
+  alert(`Exported SVG with ${pathsCreated} converted text elements using ${fontSelector.value()}\nAdjustments: X:${xOffset}, Y:${yOffset}, Scale:${(fontScale * 100).toFixed(0)}%\nSpacing: Letter:${letterSpacing.toFixed(1)}x, Line:${lineSpacing.toFixed(1)}x\nAlignment: ${textAlignment} at ${autoCenterStrength}% strength`);
 }
 
 // Helper function to generate SVG path data from text using the current font
