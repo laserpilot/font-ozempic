@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="420mm"
+   height="297mm"
+   viewBox="0 0 420 297"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   sodipodi:docname="simple_text.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.39494148"
+     inkscape:cx="168.37938"
+     inkscape:cy="348.15284"
+     inkscape:window-width="1104"
+     inkscape:window-height="694"
+     inkscape:window-x="314"
+     inkscape:window-y="74"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <rect
+       x="111.40891"
+       y="184.83751"
+       width="303.84248"
+       height="197.49761"
+       id="rect1" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     style="display:inline">
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text1"
+       style="font-size:24px;line-height:1.25;font-family:'.Al Bayan PUA';-inkscape-font-specification:'.Al Bayan PUA, Normal';font-variant-ligatures:none;text-align:center;white-space:pre;shape-inside:url(#rect1)"><tspan
+         x="129.69282"
+         y="206.73382"
+         id="tspan2">Convert this text - The </tspan><tspan
+         x="117.67773"
+         y="239.77375"
+         id="tspan3">quick brown fox jumped </tspan><tspan
+         x="158.59961"
+         y="272.81368"
+         id="tspan4">over the lazy dog </tspan><tspan
+         x="176.84103"
+         y="305.8536"
+         id="tspan5">1234567890:/</tspan></text>
+  </g>
+</svg>
