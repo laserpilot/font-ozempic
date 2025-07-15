@@ -144,28 +144,28 @@ function setup() {
   alignmentLabel.style('font-style', 'italic');
   
   // Left alignment slider
-  leftAlignSlider = createLabeledSlider(controlsDiv, 'Left Align', 0, 100, 0, 5, (slider, value) => {
+  leftAlignSlider = createLabeledSlider(controlsDiv, 'Left Align', 0, 100, 0, 0.1, (slider, value) => {
     leftAlignStrength = slider.value();
     value.html(leftAlignStrength + '%');
     updateDisplay();
   });
   
   // Center alignment slider 
-  centerAlignSlider = createLabeledSlider(controlsDiv, 'Center Align', 0, 100, 0, 5, (slider, value) => {
+  centerAlignSlider = createLabeledSlider(controlsDiv, 'Center Align', 0, 100, 0, 0.1, (slider, value) => {
     centerAlignStrength = slider.value();
     value.html(centerAlignStrength + '%');
     updateDisplay();
   });
   
   // Right alignment slider
-  rightAlignSlider = createLabeledSlider(controlsDiv, 'Right Align', 0, 100, 0, 5, (slider, value) => {
+  rightAlignSlider = createLabeledSlider(controlsDiv, 'Right Align', 00, 100, 0, 0.1, (slider, value) => {
     rightAlignStrength = slider.value();
     value.html(rightAlignStrength + '%');
     updateDisplay();
   });
   
   // Horizontal Scale Factor slider (experimental)
-  horizontalScaleSlider = createLabeledSlider(controlsDiv, 'Length Scale', 0.1, 3.0, 1.0, 0.1, (slider, value) => {
+  horizontalScaleSlider = createLabeledSlider(controlsDiv, 'Length Scale', 0.01, 3.0, 1.0, 0.01, (slider, value) => {
     horizontalScaleFactor = slider.value();
     value.html(horizontalScaleFactor.toFixed(1) + 'x');
     updateDisplay();
@@ -213,14 +213,14 @@ function setup() {
   positionLabel.style('font-weight', 'bold');
   
   // X Offset slider
-  xOffsetSlider = createLabeledSlider(controlsDiv, 'X Offset', -200, 200, 0, 0.1, (slider, value) => {
+  xOffsetSlider = createLabeledSlider(controlsDiv, 'X Offset', -10, 10, 0, 0.1, (slider, value) => {
     xOffset = slider.value();
     value.html(xOffset);
     updateDisplay();
   });
   
   // Y Offset slider  
-  yOffsetSlider = createLabeledSlider(controlsDiv, 'Y Offset', -200, 200, 0, 0.1, (slider, value) => {
+  yOffsetSlider = createLabeledSlider(controlsDiv, 'Y Offset', -10, 10, 0, 0.1, (slider, value) => {
     yOffset = slider.value();
     value.html(yOffset);
     updateDisplay();
@@ -704,39 +704,53 @@ function generateConvertedSvg() {
 function calculateAlignmentOffset(textEl) {
   let totalOffset = 0;
   
-  // Estimate text width based on content length and font size
-  const estimatedWidth = textEl.content.length * (textEl.fontSize * 0.6);
+  // Get the original (unscaled) font size for proper width estimation
+  // textEl.fontSize is already the final scaled size from getCombinedTransform
+  const originalFontSize = textEl.fontSize;
+  
+  // Estimate text width in the current coordinate space
+  // This accounts for the fact that text positioning happens in the transform space
+  const estimatedWidth = textEl.content.length * (originalFontSize * 0.6);
   
   // Calculate length-based scaling factor (exponential-like effect)
-  // Short text (1-4 chars): minimal scaling effect
-  // Medium text (5-15 chars): moderate scaling effect  
-  // Long text (16+ chars): strong scaling effect
   const textLength = textEl.content.length;
   const baseScale = 1.0;
   const lengthFactor = Math.pow(textLength / 10, horizontalScaleFactor - 1.0);
   const finalScaleFactor = baseScale * lengthFactor;
   
-  // Apply left alignment (no offset needed, but included for completeness)
-  // Left alignment keeps text at original position, so no offset
+  // CRITICAL: Scale the offset back to the original coordinate space
+  // If the text has transform scaling, we need to account for it
+  let coordinateSpaceScaling = 1.0;
+  if (textEl.scaleX && textEl.scaleX !== 1.0) {
+    // The text is in a scaled coordinate space (like 0.0757 in composite SVGs)
+    // We need to scale our screen-space offset to match the coordinate space
+    coordinateSpaceScaling = 1.0 / textEl.scaleX;
+  }
   
-  // Apply center alignment offset with length scaling
+  console.log(`Text: "${textEl.content}" - fontSize: ${originalFontSize}, scaleX: ${textEl.scaleX}, coordinateSpaceScaling: ${coordinateSpaceScaling}`);
+  
+  // Apply center alignment offset with length scaling and coordinate space scaling
   if (centerAlignStrength > 0) {
-    const centerOffset = -(estimatedWidth / 2) * (centerAlignStrength / 100) * finalScaleFactor;
+    const centerOffset = -(estimatedWidth / 2) * (centerAlignStrength / 100) * finalScaleFactor * coordinateSpaceScaling;
     totalOffset += centerOffset;
+    console.log(`Center offset: ${centerOffset} (estimated width: ${estimatedWidth})`);
   }
   
-  // Apply right alignment offset with length scaling
+  // Apply right alignment offset with length scaling and coordinate space scaling
   if (rightAlignStrength > 0) {
-    const rightOffset = -estimatedWidth * (rightAlignStrength / 100) * finalScaleFactor;
+    const rightOffset = -estimatedWidth * (rightAlignStrength / 100) * finalScaleFactor * coordinateSpaceScaling;
     totalOffset += rightOffset;
+    console.log(`Right offset: ${rightOffset}`);
   }
   
-  // Apply left alignment offset with length scaling (negative offset moves text left)
+  // Apply left alignment offset with length scaling and coordinate space scaling
   if (leftAlignStrength > 0) {
-    const leftOffset = -(estimatedWidth * 0.2) * (leftAlignStrength / 100) * finalScaleFactor;
+    const leftOffset = -(estimatedWidth * 0.2) * (leftAlignStrength / 100) * finalScaleFactor * coordinateSpaceScaling;
     totalOffset += leftOffset;
+    console.log(`Left offset: ${leftOffset}`);
   }
   
+  console.log(`Total offset for "${textEl.content}": ${totalOffset}`);
   return totalOffset;
 }
 
@@ -811,7 +825,7 @@ function parseTargetSvg() {
         const finalFontSize = fontSize * combinedTransform.scaleY; // Scale font size too
         
         if (textContent && textContent.trim() !== "") {
-          console.log(`Found tspan text: "${textContent}" at (${finalX}, ${finalY}) [with combined transforms]`);
+          console.log(`Found tspan text: "${textContent}" at (${finalX}, ${finalY}) [fontSize: ${finalFontSize}, scaleX: ${combinedTransform.scaleX}]`);
           textElements.push({
             content: textContent.trim(),
             x: finalX,
@@ -849,7 +863,7 @@ function parseTargetSvg() {
       const finalFontSize = fontSize * combinedTransform.scaleY; // Scale font size too
       
       if (textContent && textContent.trim() !== "") {
-        console.log(`Found text: "${textContent}" at (${finalX}, ${finalY}) [with combined transforms]`);
+        console.log(`Found text: "${textContent}" at (${finalX}, ${finalY}) [fontSize: ${finalFontSize}, scaleX: ${combinedTransform.scaleX}]`);
         textElements.push({
           content: textContent.trim(),
           x: finalX,
@@ -985,7 +999,7 @@ function saveSvgWithFont() {
   console.log("SVG export completed");
   const exportStrokeColor = strokeColor === '#ff0000' ? 'black' : strokeColor;
   const originalTextStatus = keepOriginalText ? 'kept visible (light gray)' : 'hidden';
-  alert(`Exported SVG with ${pathsCreated} converted text elements using ${fontSelector.value()}\nAdjustments: X:${xOffset}, Y:${yOffset}, Scale:${(fontScale * 100).toFixed(0)}%\nSpacing: Letter:${letterSpacing.toFixed(1)}x, Line:${lineSpacing.toFixed(1)}x\nAlignment: Left:${leftAlignStrength}%, Center:${centerAlignStrength}%, Right:${rightAlignStrength}%\nLength Scale: ${horizontalScaleFactor.toFixed(1)}x (affects longer text more)\nStroke: ${strokeWidth}px width, ${exportStrokeColor} color\nOriginal text: ${originalTextStatus}`);
+  alert(`Exported SVG with ${pathsCreated} converted text elements using ${fontSelector.value()}\nAdjustments: X:${xOffset}, Y:${yOffset}, Scale:${(fontScale * 100).toFixed(0)}%\nSpacing: Letter:${letterSpacing.toFixed(1)}x, Line:${lineSpacing.toFixed(1)}x\nAlignment: Left:${leftAlignStrength}%, Center:${centerAlignStrength}%, Right:${rightAlignStrength}%\nLength Scale: ${horizontalScaleFactor.toFixed(2)}x (affects longer text more)\nStroke: ${strokeWidth}px width, ${exportStrokeColor} color\nOriginal text: ${originalTextStatus}`);
 }
 
 // Helper function to generate SVG path data from text using the current font
