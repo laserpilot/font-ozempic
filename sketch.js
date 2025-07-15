@@ -20,6 +20,7 @@ let letterSpacing = 1.0, lineSpacing = 1.0; // Multipliers for spacing
 let leftAlignStrength = 0; // 0-100 percentage for left alignment
 let centerAlignStrength = 0; // 0-100 percentage for center alignment  
 let rightAlignStrength = 0; // 0-100 percentage for right alignment
+let horizontalScaleFactor = 1.0; // Exponential-like scaling factor based on text length
 let strokeWidth = 0.5; // Stroke width for single-line text
 let strokeColor = '#ff0000'; // Stroke color for single-line text (red for preview, black for export)
 let zoomLevel = 1.0; // SVG zoom level
@@ -27,7 +28,7 @@ let panX = 0, panY = 0; // Pan offset for viewBox
 let isPanning = false; // Track if user is currently panning
 let lastMouseX = 0, lastMouseY = 0; // Last mouse position for pan calculations
 let keepOriginalText = false; // Whether to keep original text visible in export
-let zoomSlider, strokeWidthSlider, strokeColorPicker, keepOriginalTextCheckbox;
+let zoomSlider, strokeWidthSlider, strokeColorPicker, keepOriginalTextCheckbox, horizontalScaleSlider;
 
 // Available single-line fonts
 const fontPaths = {
@@ -163,6 +164,13 @@ function setup() {
     updateDisplay();
   });
   
+  // Horizontal Scale Factor slider (experimental)
+  horizontalScaleSlider = createLabeledSlider(controlsDiv, 'Length Scale', 0.1, 3.0, 1.0, 0.1, (slider, value) => {
+    horizontalScaleFactor = slider.value();
+    value.html(horizontalScaleFactor.toFixed(1) + 'x');
+    updateDisplay();
+  });
+  
   // Helper function to create labeled slider
   function createLabeledSlider(parent, label, min, max, defaultVal, step, updateFunc) {
     let container = createDiv('');
@@ -191,7 +199,7 @@ function setup() {
     return slider;
   }
   
-  let alignmentInfo = createP('(Use individual sliders to control alignment. Values can be combined for custom positioning)');
+  let alignmentInfo = createP('(Use individual sliders to control alignment. Length Scale affects longer text more than shorter text)');
   alignmentInfo.parent(controlsDiv);
   alignmentInfo.style('font-size', '11px');
   alignmentInfo.style('color', '#666');
@@ -205,14 +213,14 @@ function setup() {
   positionLabel.style('font-weight', 'bold');
   
   // X Offset slider
-  xOffsetSlider = createLabeledSlider(controlsDiv, 'X Offset', -200, 200, 9, 1, (slider, value) => {
+  xOffsetSlider = createLabeledSlider(controlsDiv, 'X Offset', -200, 200, 0, 0.1, (slider, value) => {
     xOffset = slider.value();
     value.html(xOffset);
     updateDisplay();
   });
   
   // Y Offset slider  
-  yOffsetSlider = createLabeledSlider(controlsDiv, 'Y Offset', -200, 200, 0, 1, (slider, value) => {
+  yOffsetSlider = createLabeledSlider(controlsDiv, 'Y Offset', -200, 200, 0, 0.1, (slider, value) => {
     yOffset = slider.value();
     value.html(yOffset);
     updateDisplay();
@@ -225,18 +233,18 @@ function setup() {
   typographyLabel.style('font-weight', 'bold');
   
   // Font Scale slider
-  fontSizeSlider = createLabeledSlider(controlsDiv, 'Font Scale', 0.1, 2.0, 1.0, 0.1, (slider, value) => {
+  fontSizeSlider = createLabeledSlider(controlsDiv, 'Font Scale', 0.1, 2.0, 1.0, 0.01, (slider, value) => {
     fontScale = slider.value();
-    value.html((fontScale * 100).toFixed(0) + '%');
+    value.html((fontScale * 100).toFixed(2) + '%');
     updateDisplay();
   });
 
   // Letter and Line spacing (part of typography)
   
   // Letter Spacing slider
-  letterSpacingSlider = createLabeledSlider(controlsDiv, 'Letter Space', 0.1, 3.0, 1.0, 0.1, (slider, value) => {
+  letterSpacingSlider = createLabeledSlider(controlsDiv, 'Letter Space', 0.5, 3.0, 1.0, 0.01, (slider, value) => {
     letterSpacing = slider.value();
-    value.html(letterSpacing.toFixed(1) + 'x');
+    value.html(letterSpacing.toFixed(2) + 'x');
     updateDisplay();
   });
   
@@ -254,9 +262,9 @@ function setup() {
   appearanceLabel.style('font-weight', 'bold');
   
   // Stroke Width slider
-  strokeWidthSlider = createLabeledSlider(controlsDiv, 'Stroke Width', 0.1, 3.0, 0.5, 0.1, (slider, value) => {
+  strokeWidthSlider = createLabeledSlider(controlsDiv, 'Stroke Width', 0.01, 1.0, 0.02, 0.01, (slider, value) => {
     strokeWidth = slider.value();
-    value.html(strokeWidth.toFixed(1) + 'px');
+    value.html(strokeWidth.toFixed(3) + 'px');
     updateDisplay();
   });
   
@@ -699,24 +707,33 @@ function calculateAlignmentOffset(textEl) {
   // Estimate text width based on content length and font size
   const estimatedWidth = textEl.content.length * (textEl.fontSize * 0.6);
   
+  // Calculate length-based scaling factor (exponential-like effect)
+  // Short text (1-4 chars): minimal scaling effect
+  // Medium text (5-15 chars): moderate scaling effect  
+  // Long text (16+ chars): strong scaling effect
+  const textLength = textEl.content.length;
+  const baseScale = 1.0;
+  const lengthFactor = Math.pow(textLength / 10, horizontalScaleFactor - 1.0);
+  const finalScaleFactor = baseScale * lengthFactor;
+  
   // Apply left alignment (no offset needed, but included for completeness)
   // Left alignment keeps text at original position, so no offset
   
-  // Apply center alignment offset
+  // Apply center alignment offset with length scaling
   if (centerAlignStrength > 0) {
-    const centerOffset = -(estimatedWidth / 2) * (centerAlignStrength / 100);
+    const centerOffset = -(estimatedWidth / 2) * (centerAlignStrength / 100) * finalScaleFactor;
     totalOffset += centerOffset;
   }
   
-  // Apply right alignment offset
+  // Apply right alignment offset with length scaling
   if (rightAlignStrength > 0) {
-    const rightOffset = -estimatedWidth * (rightAlignStrength / 100);
+    const rightOffset = -estimatedWidth * (rightAlignStrength / 100) * finalScaleFactor;
     totalOffset += rightOffset;
   }
   
-  // Apply left alignment offset (negative offset moves text left)
+  // Apply left alignment offset with length scaling (negative offset moves text left)
   if (leftAlignStrength > 0) {
-    const leftOffset = -(estimatedWidth * 0.2) * (leftAlignStrength / 100);
+    const leftOffset = -(estimatedWidth * 0.2) * (leftAlignStrength / 100) * finalScaleFactor;
     totalOffset += leftOffset;
   }
   
@@ -930,7 +947,7 @@ function saveSvgWithFont() {
         path.setAttribute("d", pathData);
         path.setAttribute("class", `converted-text-${index}`);
         path.setAttribute("data-original-text", textEl.content);
-        path.setAttribute("data-adjustments", `x:${xOffset},y:${yOffset},scale:${fontScale},letterSpacing:${letterSpacing},lineSpacing:${lineSpacing},leftAlign:${leftAlignStrength},centerAlign:${centerAlignStrength},rightAlign:${rightAlignStrength},strokeWidth:${strokeWidth},strokeColor:${strokeColor},keepOriginalText:${keepOriginalText}`);
+        path.setAttribute("data-adjustments", `x:${xOffset},y:${yOffset},scale:${fontScale},letterSpacing:${letterSpacing},lineSpacing:${lineSpacing},leftAlign:${leftAlignStrength},centerAlign:${centerAlignStrength},rightAlign:${rightAlignStrength},horizontalScale:${horizontalScaleFactor},strokeWidth:${strokeWidth},strokeColor:${strokeColor},keepOriginalText:${keepOriginalText}`);
         convertedGroup.appendChild(path);
         pathsCreated++;
         console.log(`Created path for: "${textEl.content}" at (${adjustedX}, ${adjustedY})`);
@@ -968,7 +985,7 @@ function saveSvgWithFont() {
   console.log("SVG export completed");
   const exportStrokeColor = strokeColor === '#ff0000' ? 'black' : strokeColor;
   const originalTextStatus = keepOriginalText ? 'kept visible (light gray)' : 'hidden';
-  alert(`Exported SVG with ${pathsCreated} converted text elements using ${fontSelector.value()}\nAdjustments: X:${xOffset}, Y:${yOffset}, Scale:${(fontScale * 100).toFixed(0)}%\nSpacing: Letter:${letterSpacing.toFixed(1)}x, Line:${lineSpacing.toFixed(1)}x\nAlignment: Left:${leftAlignStrength}%, Center:${centerAlignStrength}%, Right:${rightAlignStrength}%\nStroke: ${strokeWidth}px width, ${exportStrokeColor} color\nOriginal text: ${originalTextStatus}`);
+  alert(`Exported SVG with ${pathsCreated} converted text elements using ${fontSelector.value()}\nAdjustments: X:${xOffset}, Y:${yOffset}, Scale:${(fontScale * 100).toFixed(0)}%\nSpacing: Letter:${letterSpacing.toFixed(1)}x, Line:${lineSpacing.toFixed(1)}x\nAlignment: Left:${leftAlignStrength}%, Center:${centerAlignStrength}%, Right:${rightAlignStrength}%\nLength Scale: ${horizontalScaleFactor.toFixed(1)}x (affects longer text more)\nStroke: ${strokeWidth}px width, ${exportStrokeColor} color\nOriginal text: ${originalTextStatus}`);
 }
 
 // Helper function to generate SVG path data from text using the current font
