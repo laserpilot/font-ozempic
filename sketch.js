@@ -49,7 +49,7 @@ const fontPaths = {
 };
 
 function preload() {
-  loadStrings("Radiohead - OK Computer_composite.svg", (strings) => {
+  loadStrings("enhanced_alignment_test.svg", (strings) => {
     targetSvgData = strings.join("\n");
     console.log(`Loaded SVG data: ${targetSvgData.length} characters`);
     parseTargetSvg();
@@ -97,6 +97,50 @@ function setup() {
   controlsDiv.style('height', 'fit-content');
   controlsDiv.parent(mainContainer);
   
+  // Load New SVG button (moved to top)
+  let loadButton = createButton('Load New SVG File');
+  loadButton.parent(controlsDiv);
+  loadButton.mousePressed(() => {
+    // Create a traditional file input element
+    let input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.svg';
+    input.onchange = function(e) {
+      let file = e.target.files[0];
+      if (file && file.name.toLowerCase().endsWith('.svg')) {
+        console.log("Loading new SVG file:", file.name);
+        
+        let reader = new FileReader();
+        reader.onload = function(event) {
+          let svgContent = event.target.result;
+          console.log(`Loaded new SVG data: ${svgContent.length} characters`);
+          
+          // Use the same method as initial load
+          targetSvgData = svgContent;
+          parseTargetSvg();
+          
+          // Update display
+          if (originalSvgDiv) {
+            displayOriginalSvg();
+          }
+          updateDisplay();
+        };
+        reader.readAsText(file);
+      } else {
+        alert('Please select a valid SVG file.');
+      }
+    };
+    input.click();
+  });
+  loadButton.style('width', '100%');
+  loadButton.style('margin-bottom', '15px');
+  loadButton.style('padding', '8px');
+  loadButton.style('background-color', '#007bff');
+  loadButton.style('color', 'white');
+  loadButton.style('border', 'none');
+  loadButton.style('border-radius', '4px');
+  loadButton.style('cursor', 'pointer');
+  
   // View mode selector
   let modeLabel = createP('View Mode:');
   modeLabel.parent(controlsDiv);
@@ -138,10 +182,22 @@ function setup() {
   // Individual alignment sliders
   let alignmentLabel = createP('Alignment Controls:');
   alignmentLabel.parent(controlsDiv);
-  alignmentLabel.style('margin', '0 0 10px 0');
+  alignmentLabel.style('margin', '0 0 5px 0');
   alignmentLabel.style('font-size', '13px');
   alignmentLabel.style('color', '#666');
   alignmentLabel.style('font-style', 'italic');
+  
+  // Add explanatory text for alignment controls
+  let alignmentHelp = createP('Use these controls to fine-tune text positioning. For composite files with text-anchor="middle", the tool automatically skips conflicting alignments. Try different combinations to find the right balance for your specific SVG structure.');
+  alignmentHelp.parent(controlsDiv);
+  alignmentHelp.style('margin', '0 0 10px 0');
+  alignmentHelp.style('font-size', '11px');
+  alignmentHelp.style('color', '#888');
+  alignmentHelp.style('line-height', '1.3');
+  alignmentHelp.style('padding', '8px');
+  alignmentHelp.style('background-color', '#f0f8ff');
+  alignmentHelp.style('border-radius', '4px');
+  alignmentHelp.style('border-left', '3px solid #007bff');
   
   // Left alignment slider
   leftAlignSlider = createLabeledSlider(controlsDiv, 'Left Align', 0, 100, 0, 0.1, (slider, value) => {
@@ -171,6 +227,18 @@ function setup() {
     updateDisplay();
   });
   
+  // Add explanatory text for Length Scale
+  let lengthScaleHelp = createP('Length Scale: 1.0 = no effect, >1.0 = longer text gets more spacing, <1.0 = longer text gets less spacing. This creates an exponential effect based on text length.');
+  lengthScaleHelp.parent(controlsDiv);
+  lengthScaleHelp.style('margin', '0 0 10px 0');
+  lengthScaleHelp.style('font-size', '11px');
+  lengthScaleHelp.style('color', '#888');
+  lengthScaleHelp.style('line-height', '1.3');
+  lengthScaleHelp.style('padding', '6px');
+  lengthScaleHelp.style('background-color', '#fffbf0');
+  lengthScaleHelp.style('border-radius', '4px');
+  lengthScaleHelp.style('border-left', '3px solid #ffa500');
+  
   // Helper function to create labeled slider
   function createLabeledSlider(parent, label, min, max, defaultVal, step, updateFunc) {
     let container = createDiv('');
@@ -199,12 +267,16 @@ function setup() {
     return slider;
   }
   
-  let alignmentInfo = createP('(Use individual sliders to control alignment. Length Scale affects longer text more than shorter text)');
+  let alignmentInfo = createP('💡 Order of Operations: 1) X/Y Offset (basic positioning), 2) Length Scale (text-length-based adjustment), 3) Alignment controls (fine-tuning). For composite files, text-anchor detection prevents conflicts.');
   alignmentInfo.parent(controlsDiv);
   alignmentInfo.style('font-size', '11px');
   alignmentInfo.style('color', '#666');
   alignmentInfo.style('margin', '0 0 15px 0');
   alignmentInfo.style('line-height', '1.3');
+  alignmentInfo.style('padding', '8px');
+  alignmentInfo.style('background-color', '#f9f9f9');
+  alignmentInfo.style('border-radius', '4px');
+  alignmentInfo.style('border-left', '3px solid #28a745');
   
   // Position Fine-tuning section
   let positionLabel = createP('Position Fine-tuning:');
@@ -358,50 +430,6 @@ function setup() {
   actionsLabel.parent(controlsDiv);
   actionsLabel.style('margin', '0 0 10px 0');
   actionsLabel.style('font-weight', 'bold');
-  
-  let loadButton = createButton('Load New SVG File');
-  loadButton.parent(controlsDiv);
-  loadButton.mousePressed(() => {
-    // Create a traditional file input element
-    let input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.svg';
-    input.onchange = function(e) {
-      let file = e.target.files[0];
-      if (file && file.name.toLowerCase().endsWith('.svg')) {
-        console.log("Loading new SVG file:", file.name);
-        
-        let reader = new FileReader();
-        reader.onload = function(event) {
-          let svgContent = event.target.result;
-          console.log(`Loaded new SVG data: ${svgContent.length} characters`);
-          
-          // Use the same method as initial load
-          targetSvgData = svgContent;
-          parseTargetSvg();
-          
-          // Update display
-          if (originalSvgDiv) {
-            displayOriginalSvg();
-          }
-          
-          console.log(`Successfully loaded ${file.name} with ${textElements.length} text elements`);
-        };
-        reader.readAsText(file);
-      } else {
-        alert('Please select a valid SVG file.');
-      }
-    };
-    input.click();
-  });
-  loadButton.style('width', '100%');
-  loadButton.style('margin-bottom', '8px');
-  loadButton.style('padding', '8px');
-  loadButton.style('background-color', '#007bff');
-  loadButton.style('color', 'white');
-  loadButton.style('border', 'none');
-  loadButton.style('border-radius', '4px');
-  loadButton.style('cursor', 'pointer');
   
   let saveButton = createButton('Save SVG with Single-Line Font');
   saveButton.parent(controlsDiv);
