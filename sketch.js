@@ -704,12 +704,28 @@ function generateConvertedSvg() {
 function calculateAlignmentOffset(textEl) {
   let totalOffset = 0;
   
+  // Check if text already has built-in alignment via text-anchor
+  const hasBuiltInCenter = textEl.textAnchor === "middle";
+  const hasBuiltInEnd = textEl.textAnchor === "end";
+  
+  console.log(`Text: "${textEl.content}" - existing anchor: ${textEl.textAnchor}`);
+  
+  // If text already has text-anchor="middle", don't apply center alignment
+  // If text already has text-anchor="end", don't apply right alignment
+  if (hasBuiltInCenter && centerAlignStrength > 0) {
+    console.log(`Skipping center alignment - text already has text-anchor="middle"`);
+    // Don't apply center offset, but still allow fine-tuning with other alignments
+  }
+  
+  if (hasBuiltInEnd && rightAlignStrength > 0) {
+    console.log(`Skipping right alignment - text already has text-anchor="end"`);
+    // Don't apply right offset, but still allow fine-tuning with other alignments
+  }
+  
   // Get the original (unscaled) font size for proper width estimation
-  // textEl.fontSize is already the final scaled size from getCombinedTransform
   const originalFontSize = textEl.fontSize;
   
   // Estimate text width in the current coordinate space
-  // This accounts for the fact that text positioning happens in the transform space
   const estimatedWidth = textEl.content.length * (originalFontSize * 0.6);
   
   // Calculate length-based scaling factor (exponential-like effect)
@@ -718,32 +734,29 @@ function calculateAlignmentOffset(textEl) {
   const lengthFactor = Math.pow(textLength / 10, horizontalScaleFactor - 1.0);
   const finalScaleFactor = baseScale * lengthFactor;
   
-  // CRITICAL: Scale the offset back to the original coordinate space
-  // If the text has transform scaling, we need to account for it
+  // Scale the offset back to the original coordinate space
   let coordinateSpaceScaling = 1.0;
   if (textEl.scaleX && textEl.scaleX !== 1.0) {
-    // The text is in a scaled coordinate space (like 0.0757 in composite SVGs)
-    // We need to scale our screen-space offset to match the coordinate space
     coordinateSpaceScaling = 1.0 / textEl.scaleX;
   }
   
-  console.log(`Text: "${textEl.content}" - fontSize: ${originalFontSize}, scaleX: ${textEl.scaleX}, coordinateSpaceScaling: ${coordinateSpaceScaling}`);
+  console.log(`fontSize: ${originalFontSize}, scaleX: ${textEl.scaleX}, coordinateSpaceScaling: ${coordinateSpaceScaling}`);
   
-  // Apply center alignment offset with length scaling and coordinate space scaling
-  if (centerAlignStrength > 0) {
+  // Apply center alignment offset (only if not already centered)
+  if (centerAlignStrength > 0 && !hasBuiltInCenter) {
     const centerOffset = -(estimatedWidth / 2) * (centerAlignStrength / 100) * finalScaleFactor * coordinateSpaceScaling;
     totalOffset += centerOffset;
     console.log(`Center offset: ${centerOffset} (estimated width: ${estimatedWidth})`);
   }
   
-  // Apply right alignment offset with length scaling and coordinate space scaling
-  if (rightAlignStrength > 0) {
+  // Apply right alignment offset (only if not already right-aligned)
+  if (rightAlignStrength > 0 && !hasBuiltInEnd) {
     const rightOffset = -estimatedWidth * (rightAlignStrength / 100) * finalScaleFactor * coordinateSpaceScaling;
     totalOffset += rightOffset;
     console.log(`Right offset: ${rightOffset}`);
   }
   
-  // Apply left alignment offset with length scaling and coordinate space scaling
+  // Apply left alignment offset (fine-tuning for all text)
   if (leftAlignStrength > 0) {
     const leftOffset = -(estimatedWidth * 0.2) * (leftAlignStrength / 100) * finalScaleFactor * coordinateSpaceScaling;
     totalOffset += leftOffset;
@@ -824,8 +837,11 @@ function parseTargetSvg() {
         const finalY = combinedTransform.translateY + (y * combinedTransform.scaleY);
         const finalFontSize = fontSize * combinedTransform.scaleY; // Scale font size too
         
+        // Check for existing text-anchor attribute
+        const textAnchor = textNode.getAttribute("text-anchor") || tspan.getAttribute("text-anchor") || "start";
+        
         if (textContent && textContent.trim() !== "") {
-          console.log(`Found tspan text: "${textContent}" at (${finalX}, ${finalY}) [fontSize: ${finalFontSize}, scaleX: ${combinedTransform.scaleX}]`);
+          console.log(`Found tspan text: "${textContent}" at (${finalX}, ${finalY}) [fontSize: ${finalFontSize}, scaleX: ${combinedTransform.scaleX}, anchor: ${textAnchor}]`);
           textElements.push({
             content: textContent.trim(),
             x: finalX,
@@ -835,7 +851,8 @@ function parseTargetSvg() {
             originalNode: tspan,
             parentTextNode: textNode,
             scaleX: combinedTransform.scaleX,
-            scaleY: combinedTransform.scaleY
+            scaleY: combinedTransform.scaleY,
+            textAnchor: textAnchor
           });
         }
       });
@@ -862,8 +879,11 @@ function parseTargetSvg() {
       const finalY = combinedTransform.translateY + (y * combinedTransform.scaleY);
       const finalFontSize = fontSize * combinedTransform.scaleY; // Scale font size too
       
+      // Check for existing text-anchor attribute
+      const textAnchor = textNode.getAttribute("text-anchor") || "start";
+      
       if (textContent && textContent.trim() !== "") {
-        console.log(`Found text: "${textContent}" at (${finalX}, ${finalY}) [fontSize: ${finalFontSize}, scaleX: ${combinedTransform.scaleX}]`);
+        console.log(`Found text: "${textContent}" at (${finalX}, ${finalY}) [fontSize: ${finalFontSize}, scaleX: ${combinedTransform.scaleX}, anchor: ${textAnchor}]`);
         textElements.push({
           content: textContent.trim(),
           x: finalX,
@@ -872,7 +892,8 @@ function parseTargetSvg() {
           className: className,
           originalNode: textNode,
           scaleX: combinedTransform.scaleX,
-          scaleY: combinedTransform.scaleY
+          scaleY: combinedTransform.scaleY,
+          textAnchor: textAnchor
         });
       }
     }

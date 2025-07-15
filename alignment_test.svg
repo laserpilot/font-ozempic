@@ -1,0 +1,122 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="842" height="595" viewBox="0 0 842 595">
+  <rect width="842" height="595" fill="white" />
+  
+  <!-- Test grid for visual reference -->
+  <defs>
+    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#f0f0f0" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#grid)" opacity="0.3"/>
+  
+  <!-- Vertical reference lines for alignment testing -->
+  <line x1="210" y1="0" x2="210" y2="595" stroke="#ddd" stroke-width="2" stroke-dasharray="5,5"/>
+  <line x1="421" y1="0" x2="421" y2="595" stroke="#ddd" stroke-width="2" stroke-dasharray="5,5"/>
+  <line x1="632" y1="0" x2="632" y2="595" stroke="#ddd" stroke-width="2" stroke-dasharray="5,5"/>
+  
+  <!-- Group 1: Time Labels (Short Text) - Similar to music visualization patterns -->
+  <g id="master-text-labels-layer">
+    <g id="time-labels-group" transform="translate(0,0)">
+      <!-- Very short (2-3 chars) -->
+      <text x="100" y="50" font-family="Ubuntu, sans-serif" font-size="12" fill="black">0:0</text>
+      <text x="300" y="50" font-family="Ubuntu, sans-serif" font-size="12" fill="black">1:3</text>
+      <text x="500" y="50" font-family="Ubuntu, sans-serif" font-size="12" fill="black">2:4</text>
+      <text x="700" y="50" font-family="Ubuntu, sans-serif" font-size="12" fill="black">3:7</text>
+      
+      <!-- Short (4-5 chars) -->
+      <text x="100" y="80" font-family="Ubuntu, sans-serif" font-size="12" fill="black">0:33</text>
+      <text x="300" y="80" font-family="Ubuntu, sans-serif" font-size="12" fill="black">1:45</text>
+      <text x="500" y="80" font-family="Ubuntu, sans-serif" font-size="12" fill="black">2:17</text>
+      <text x="700" y="80" font-family="Ubuntu, sans-serif" font-size="12" fill="black">3:52</text>
+    </g>
+    
+    <!-- Group 2: Song Titles (Medium Text) -->
+    <g id="song-titles-group" transform="translate(0,0)">
+      <!-- Medium length (6-12 chars) -->
+      <text x="100" y="130" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Airbag</text>
+      <text x="300" y="130" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Let Down</text>
+      <text x="500" y="130" font-family="Ubuntu, sans-serif" font-size="14" fill="black">No Surprises</text>
+      <text x="700" y="130" font-family="Ubuntu, sans-serif" font-size="14" fill="black">The Tourist</text>
+      
+      <!-- Long (13-20 chars) -->
+      <text x="100" y="160" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Karma Police</text>
+      <text x="300" y="160" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Fitter Happier</text>
+      <text x="500" y="160" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Electioneering</text>
+      <text x="700" y="160" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Paranoid Android</text>
+      
+      <!-- Very long (21+ chars) -->
+      <text x="100" y="190" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Subterranean Homesick Alien</text>
+      <text x="300" y="190" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Exit Music (For A Film)</text>
+      <text x="500" y="190" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Climbing Up The Walls</text>
+      <text x="700" y="190" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Everything In Its Right Place</text>
+    </g>
+    
+    <!-- Group 3: Different Font Sizes -->
+    <g id="font-size-test-group" transform="translate(0,0)">
+      <!-- Small font sizes -->
+      <text x="100" y="250" font-family="Ubuntu, sans-serif" font-size="10" fill="black">Small Text (10px)</text>
+      <text x="300" y="250" font-family="Ubuntu, sans-serif" font-size="10" fill="black">Medium Length Title</text>
+      <text x="500" y="250" font-family="Ubuntu, sans-serif" font-size="10" fill="black">Very Long Song Title Name</text>
+      
+      <!-- Medium font sizes -->
+      <text x="100" y="290" font-family="Ubuntu, sans-serif" font-size="16" fill="black">Medium (16px)</text>
+      <text x="300" y="290" font-family="Ubuntu, sans-serif" font-size="16" fill="black">Song Title</text>
+      <text x="500" y="290" font-family="Ubuntu, sans-serif" font-size="16" fill="black">Long Song Title Name</text>
+      
+      <!-- Large font sizes -->
+      <text x="100" y="330" font-family="Ubuntu, sans-serif" font-size="20" fill="black">Large (20px)</text>
+      <text x="300" y="330" font-family="Ubuntu, sans-serif" font-size="20" fill="black">Title</text>
+      <text x="500" y="330" font-family="Ubuntu, sans-serif" font-size="20" fill="black">Extended Title</text>
+      
+      <!-- Extra large font sizes -->
+      <text x="100" y="380" font-family="Ubuntu, sans-serif" font-size="24" fill="black">XL (24px)</text>
+      <text x="300" y="380" font-family="Ubuntu, sans-serif" font-size="24" fill="black">Name</text>
+      <text x="500" y="380" font-family="Ubuntu, sans-serif" font-size="24" fill="black">Long Name</text>
+    </g>
+    
+    <!-- Group 4: Mixed Content Scenarios -->
+    <g id="mixed-content-group" transform="translate(0,0)">
+      <!-- Coordinates/Technical labels -->
+      <text x="100" y="430" font-family="Ubuntu, sans-serif" font-size="11" fill="black">x:42</text>
+      <text x="200" y="430" font-family="Ubuntu, sans-serif" font-size="11" fill="black">y:128</text>
+      <text x="300" y="430" font-family="Ubuntu, sans-serif" font-size="11" fill="black">Hz:440</text>
+      
+      <!-- Album/Artist names -->
+      <text x="100" y="460" font-family="Ubuntu, sans-serif" font-size="13" fill="black">OK Computer</text>
+      <text x="300" y="460" font-family="Ubuntu, sans-serif" font-size="13" fill="black">Radiohead</text>
+      <text x="500" y="460" font-family="Ubuntu, sans-serif" font-size="13" fill="black">In Rainbows</text>
+      
+      <!-- Version/Edition labels -->
+      <text x="100" y="490" font-family="Ubuntu, sans-serif" font-size="12" fill="black">Remastered</text>
+      <text x="300" y="490" font-family="Ubuntu, sans-serif" font-size="12" fill="black">Special Edition</text>
+      <text x="500" y="490" font-family="Ubuntu, sans-serif" font-size="12" fill="black">Collector's Edition</text>
+      
+      <!-- URLs/paths -->
+      <text x="100" y="520" font-family="Ubuntu, sans-serif" font-size="10" fill="black">path/to/file.svg</text>
+      <text x="350" y="520" font-family="Ubuntu, sans-serif" font-size="10" fill="black">https://example.com</text>
+      
+      <!-- Special characters and numbers -->
+      <text x="100" y="550" font-family="Ubuntu, sans-serif" font-size="12" fill="black">Track #1</text>
+      <text x="200" y="550" font-family="Ubuntu, sans-serif" font-size="12" fill="black">v1.2.3</text>
+      <text x="300" y="550" font-family="Ubuntu, sans-serif" font-size="12" fill="black">© 2024</text>
+      <text x="400" y="550" font-family="Ubuntu, sans-serif" font-size="12" fill="black">@username</text>
+      <text x="500" y="550" font-family="Ubuntu, sans-serif" font-size="12" fill="black">[brackets]</text>
+      <text x="600" y="550" font-family="Ubuntu, sans-serif" font-size="12" fill="black">{curly}</text>
+    </g>
+  </g>
+  
+  <!-- Reference labels for testing -->
+  <g id="reference-labels">
+    <text x="10" y="40" font-family="Ubuntu, sans-serif" font-size="9" fill="#666">Time Labels:</text>
+    <text x="10" y="120" font-family="Ubuntu, sans-serif" font-size="9" fill="#666">Song Titles:</text>
+    <text x="10" y="240" font-family="Ubuntu, sans-serif" font-size="9" fill="#666">Font Sizes:</text>
+    <text x="10" y="420" font-family="Ubuntu, sans-serif" font-size="9" fill="#666">Mixed Content:</text>
+    
+    <!-- Character count references -->
+    <text x="750" y="40" font-family="Ubuntu, sans-serif" font-size="8" fill="#999">2-5 chars</text>
+    <text x="750" y="120" font-family="Ubuntu, sans-serif" font-size="8" fill="#999">6-12 chars</text>
+    <text x="750" y="150" font-family="Ubuntu, sans-serif" font-size="8" fill="#999">13-20 chars</text>
+    <text x="750" y="180" font-family="Ubuntu, sans-serif" font-size="8" fill="#999">21+ chars</text>
+  </g>
+</svg>
