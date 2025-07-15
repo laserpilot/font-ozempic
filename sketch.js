@@ -14,15 +14,20 @@ let modeSelector;
 
 // Positioning controls
 let xOffsetSlider, yOffsetSlider, fontSizeSlider, letterSpacingSlider, lineSpacingSlider;
-let textAlignmentSelector, autoCenterStrengthSlider;
+let leftAlignSlider, centerAlignSlider, rightAlignSlider;
 let xOffset = 9, yOffset = 0, fontScale = 1.0; // Scale factor as percentage
 let letterSpacing = 1.0, lineSpacing = 1.0; // Multipliers for spacing
-let textAlignment = 'left'; // 'left', 'center', 'right'
-let autoCenterStrength = 50; // 0-100 percentage for alignment strength
+let leftAlignStrength = 0; // 0-100 percentage for left alignment
+let centerAlignStrength = 0; // 0-100 percentage for center alignment  
+let rightAlignStrength = 0; // 0-100 percentage for right alignment
 let strokeWidth = 0.5; // Stroke width for single-line text
 let strokeColor = '#ff0000'; // Stroke color for single-line text (red for preview, black for export)
 let zoomLevel = 1.0; // SVG zoom level
-let zoomSlider, strokeWidthSlider, strokeColorPicker;
+let panX = 0, panY = 0; // Pan offset for viewBox
+let isPanning = false; // Track if user is currently panning
+let lastMouseX = 0, lastMouseY = 0; // Last mouse position for pan calculations
+let keepOriginalText = false; // Whether to keep original text visible in export
+let zoomSlider, strokeWidthSlider, strokeColorPicker, keepOriginalTextCheckbox;
 
 // Available single-line fonts
 const fontPaths = {
@@ -129,68 +134,34 @@ function setup() {
   alignmentSectionLabel.style('margin', '0 0 10px 0');
   alignmentSectionLabel.style('font-weight', 'bold');
   
-  // Text Alignment buttons
-  let alignmentLabel = createP('Alignment:');
+  // Individual alignment sliders
+  let alignmentLabel = createP('Alignment Controls:');
   alignmentLabel.parent(controlsDiv);
-  alignmentLabel.style('margin', '0 0 5px 0');
+  alignmentLabel.style('margin', '0 0 10px 0');
   alignmentLabel.style('font-size', '13px');
+  alignmentLabel.style('color', '#666');
+  alignmentLabel.style('font-style', 'italic');
   
-  let buttonContainer = createDiv('');
-  buttonContainer.parent(controlsDiv);
-  buttonContainer.style('display', 'flex');
-  buttonContainer.style('gap', '4px');
-  buttonContainer.style('margin-bottom', '8px');
-  
-  // Left alignment button
-  let leftButton = createButton('Left');
-  leftButton.parent(buttonContainer);
-  leftButton.style('flex', '1');
-  leftButton.style('padding', '6px');
-  leftButton.style('border', '1px solid #ddd');
-  leftButton.style('background-color', textAlignment === 'left' ? '#007bff' : '#f8f9fa');
-  leftButton.style('color', textAlignment === 'left' ? 'white' : 'black');
-  leftButton.style('border-radius', '4px');
-  leftButton.style('cursor', 'pointer');
-  leftButton.mousePressed(() => {
-    textAlignment = 'left';
-    updateAlignmentButtons();
+  // Left alignment slider
+  leftAlignSlider = createLabeledSlider(controlsDiv, 'Left Align', 0, 100, 0, 5, (slider, value) => {
+    leftAlignStrength = slider.value();
+    value.html(leftAlignStrength + '%');
     updateDisplay();
   });
   
-  // Center alignment button
-  let centerButton = createButton('Center');
-  centerButton.parent(buttonContainer);
-  centerButton.style('flex', '1');
-  centerButton.style('padding', '6px');
-  centerButton.style('border', '1px solid #ddd');
-  centerButton.style('background-color', textAlignment === 'center' ? '#007bff' : '#f8f9fa');
-  centerButton.style('color', textAlignment === 'center' ? 'white' : 'black');
-  centerButton.style('border-radius', '4px');
-  centerButton.style('cursor', 'pointer');
-  centerButton.mousePressed(() => {
-    textAlignment = 'center';
-    updateAlignmentButtons();
+  // Center alignment slider 
+  centerAlignSlider = createLabeledSlider(controlsDiv, 'Center Align', 0, 100, 0, 5, (slider, value) => {
+    centerAlignStrength = slider.value();
+    value.html(centerAlignStrength + '%');
     updateDisplay();
   });
   
-  // Right alignment button
-  let rightButton = createButton('Right');
-  rightButton.parent(buttonContainer);
-  rightButton.style('flex', '1');
-  rightButton.style('padding', '6px');
-  rightButton.style('border', '1px solid #ddd');
-  rightButton.style('background-color', textAlignment === 'right' ? '#007bff' : '#f8f9fa');
-  rightButton.style('color', textAlignment === 'right' ? 'white' : 'black');
-  rightButton.style('border-radius', '4px');
-  rightButton.style('cursor', 'pointer');
-  rightButton.mousePressed(() => {
-    textAlignment = 'right';
-    updateAlignmentButtons();
+  // Right alignment slider
+  rightAlignSlider = createLabeledSlider(controlsDiv, 'Right Align', 0, 100, 0, 5, (slider, value) => {
+    rightAlignStrength = slider.value();
+    value.html(rightAlignStrength + '%');
     updateDisplay();
   });
-  
-  // Store button references for updating styles
-  window.alignmentButtons = { left: leftButton, center: centerButton, right: rightButton };
   
   // Helper function to create labeled slider
   function createLabeledSlider(parent, label, min, max, defaultVal, step, updateFunc) {
@@ -220,14 +191,7 @@ function setup() {
     return slider;
   }
   
-  // Auto-Center Strength slider
-  autoCenterStrengthSlider = createLabeledSlider(controlsDiv, 'Align Strength', 0, 100, 50, 5, (slider, value) => {
-    autoCenterStrength = slider.value();
-    value.html(autoCenterStrength + '%');
-    updateDisplay();
-  });
-  
-  let alignmentInfo = createP('(Controls how text is positioned relative to its original location)');
+  let alignmentInfo = createP('(Use individual sliders to control alignment. Values can be combined for custom positioning)');
   alignmentInfo.parent(controlsDiv);
   alignmentInfo.style('font-size', '11px');
   alignmentInfo.style('color', '#666');
@@ -342,10 +306,49 @@ function setup() {
     updateDisplay();
   });
 
+  // Export Options section
+  let exportLabel = createP('Export Options:');
+  exportLabel.parent(controlsDiv);
+  exportLabel.style('margin', '20px 0 10px 0');
+  exportLabel.style('font-weight', 'bold');
+  
+  // Keep Original Text checkbox
+  let checkboxContainer = createDiv('');
+  checkboxContainer.parent(controlsDiv);
+  checkboxContainer.style('margin-bottom', '15px');
+  checkboxContainer.style('display', 'flex');
+  checkboxContainer.style('align-items', 'center');
+  
+  keepOriginalTextCheckbox = createCheckbox('', keepOriginalText);
+  keepOriginalTextCheckbox.parent(checkboxContainer);
+  keepOriginalTextCheckbox.changed(() => {
+    keepOriginalText = keepOriginalTextCheckbox.checked();
+  });
+  keepOriginalTextCheckbox.style('margin-right', '8px');
+  
+  let checkboxLabel = createSpan('Keep original text visible in export');
+  checkboxLabel.parent(checkboxContainer);
+  checkboxLabel.style('font-size', '13px');
+  checkboxLabel.style('color', '#333');
+  checkboxLabel.style('cursor', 'pointer');
+  
+  // Make label clickable to toggle checkbox
+  checkboxLabel.mousePressed(() => {
+    keepOriginalText = !keepOriginalText;
+    keepOriginalTextCheckbox.checked(keepOriginalText);
+  });
+  
+  let checkboxInfo = createP('(When checked, original text remains visible alongside single-line converted text)');
+  checkboxInfo.parent(controlsDiv);
+  checkboxInfo.style('font-size', '11px');
+  checkboxInfo.style('color', '#666');
+  checkboxInfo.style('margin', '0 0 15px 0');
+  checkboxInfo.style('line-height', '1.3');
+  
   // Action buttons section
   let actionsLabel = createP('Actions:');
   actionsLabel.parent(controlsDiv);
-  actionsLabel.style('margin', '20px 0 10px 0');
+  actionsLabel.style('margin', '0 0 10px 0');
   actionsLabel.style('font-weight', 'bold');
   
   let loadButton = createButton('Load New SVG File');
@@ -470,21 +473,55 @@ function modeChanged() {
   updateDisplay();
 }
 
-function updateAlignmentButtons() {
-  if (window.alignmentButtons) {
-    // Update button styles based on current alignment
-    Object.keys(window.alignmentButtons).forEach(alignment => {
-      const button = window.alignmentButtons[alignment];
-      if (textAlignment === alignment) {
-        button.style('background-color', '#007bff');
-        button.style('color', 'white');
-      } else {
-        button.style('background-color', '#f8f9fa');
-        button.style('color', 'black');
+// Function to add pan listeners to the SVG elements
+function addPanListeners() {
+  // Find all SVG elements in the display div
+  setTimeout(() => {
+    const svgElements = originalSvgDiv.elt.querySelectorAll('svg');
+  
+  svgElements.forEach(svg => {
+    // Set cursor style
+    svg.style.cursor = 'grab';
+    
+    svg.addEventListener('mousedown', (e) => {
+      isPanning = true;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      svg.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+    
+    svg.addEventListener('mousemove', (e) => {
+      if (isPanning) {
+        const deltaX = e.clientX - lastMouseX;
+        const deltaY = e.clientY - lastMouseY;
+        
+        // Convert screen pixels to SVG coordinates based on zoom level
+        const panSensitivity = 1 / zoomLevel;
+        panX -= deltaX * panSensitivity;
+        panY -= deltaY * panSensitivity;
+        
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        
+        updateDisplay();
       }
     });
-  }
+    
+    svg.addEventListener('mouseup', () => {
+      isPanning = false;
+      svg.style.cursor = 'grab';
+    });
+    
+    svg.addEventListener('mouseleave', () => {
+      isPanning = false;
+      svg.style.cursor = 'grab';
+    });
+  });
+  }, 100); // Wait for DOM to update
 }
+
+// Removed updateAlignmentButtons function - no longer needed with sliders
 
 function updateDisplay() {
   if (previewMode === "original") {
@@ -505,17 +542,17 @@ function displayOriginalSvg() {
     const originalWidth = parseFloat(svgRoot.getAttribute("width")) || 842;
     const originalHeight = parseFloat(svgRoot.getAttribute("height")) || 595;
     
-    // Set consistent display size
-    const displayWidth = 600;
+    // Set larger display size for better interaction
+    const displayWidth = 800;
     const displayHeight = Math.round((originalHeight / originalWidth) * displayWidth);
     
     // Calculate viewBox for zoom (zoom in by reducing viewBox size)
     const viewBoxWidth = originalWidth / zoomLevel;
     const viewBoxHeight = originalHeight / zoomLevel;
     
-    // Center the viewBox (for now - could add panning later)
-    const viewBoxX = (originalWidth - viewBoxWidth) / 2;
-    const viewBoxY = (originalHeight - viewBoxHeight) / 2;
+    // Apply pan offsets to viewBox position
+    const viewBoxX = (originalWidth - viewBoxWidth) / 2 + panX;
+    const viewBoxY = (originalHeight - viewBoxHeight) / 2 + panY;
     
     // Apply zoom via viewBox manipulation
     svgRoot.setAttribute("width", displayWidth);
@@ -527,12 +564,15 @@ function displayOriginalSvg() {
     const scaledSvg = serializer.serializeToString(svgDoc);
     
     originalSvgDiv.html(`
-      <h3>Loaded SVG (${textElements.length} text elements found) - Zoom: ${(zoomLevel * 100).toFixed(0)}%</h3>
+      <h3>Loaded SVG (${textElements.length} text elements found) - Zoom: ${(zoomLevel * 100).toFixed(0)}% - Pan: ${panX.toFixed(0)}, ${panY.toFixed(0)}</h3>
       <div style="overflow: auto; max-height: 80vh; border: 1px solid #ddd;">
         ${scaledSvg}
       </div>
-      <p><small>Original SVG with text elements</small></p>
+      <p><small>Original SVG with text elements. Click and drag to pan.</small></p>
     `);
+    
+    // Add pan functionality to the SVG
+    addPanListeners();
   }
 }
 
@@ -561,13 +601,16 @@ function displayConvertedSvg() {
   }
   
   originalSvgDiv.html(`
-    <h3>Converted with ${fontSelector.value()} - Zoom: ${(zoomLevel * 100).toFixed(0)}%</h3>
+    <h3>Converted with ${fontSelector.value()} - Zoom: ${(zoomLevel * 100).toFixed(0)}% - Pan: ${panX.toFixed(0)}, ${panY.toFixed(0)}</h3>
     <div style="overflow: auto; max-height: 80vh; border: 1px solid #ddd; display: inline-block; background: white;">
       ${svgContent}
     </div>
     <p>Text converted to single-line vector paths. Ready for plotting!</p>
-    <p><small>Converted ${textElements.length} text elements using ${Object.keys(currentFont.glyphs).length} glyphs</small></p>
+    <p><small>Converted ${textElements.length} text elements using ${Object.keys(currentFont.glyphs).length} glyphs. Click and drag to pan.</small></p>
   `);
+  
+  // Add pan functionality to the SVG
+  addPanListeners();
 }
 
 function generateConvertedSvg() {
@@ -601,7 +644,7 @@ function generateConvertedSvg() {
   textElements.forEach((textEl, index) => {
     if (textEl.content && textEl.content.trim() !== "") {
       // Apply alignment-based positioning
-      const alignmentOffset = calculateAlignmentOffset(textEl, textAlignment, autoCenterStrength);
+      const alignmentOffset = calculateAlignmentOffset(textEl);
       const adjustedX = textEl.x + xOffset + alignmentOffset;
       
       // Apply line spacing: calculate relative position from first line
@@ -630,15 +673,15 @@ function generateConvertedSvg() {
   const originalWidth = parseFloat(svgRoot.getAttribute("width")) || 842;
   const originalHeight = parseFloat(svgRoot.getAttribute("height")) || 595;
   
-  // Set consistent display size
-  const displayWidth = 600;
+  // Set larger display size for better interaction  
+  const displayWidth = 800;
   const displayHeight = Math.round((originalHeight / originalWidth) * displayWidth);
   
   // Calculate viewBox for zoom
   const viewBoxWidth = originalWidth / zoomLevel;
   const viewBoxHeight = originalHeight / zoomLevel;
-  const viewBoxX = (originalWidth - viewBoxWidth) / 2;
-  const viewBoxY = (originalHeight - viewBoxHeight) / 2;
+  const viewBoxX = (originalWidth - viewBoxWidth) / 2 + panX;
+  const viewBoxY = (originalHeight - viewBoxHeight) / 2 + panY;
   
   svgRoot.setAttribute("width", displayWidth);
   svgRoot.setAttribute("height", displayHeight);
@@ -649,22 +692,35 @@ function generateConvertedSvg() {
   return serializer.serializeToString(svgDoc);
 }
 
-// Helper function to calculate alignment offset based on text properties
-function calculateAlignmentOffset(textEl, alignment, strength) {
-  let alignmentOffset = 0;
+// Helper function to calculate alignment offset based on individual slider values
+function calculateAlignmentOffset(textEl) {
+  let totalOffset = 0;
   
-  if (alignment === 'center') {
-    // Estimate text width based on content length and font size
-    const estimatedWidth = textEl.content.length * (textEl.fontSize * 0.6);
-    alignmentOffset = -(estimatedWidth / 2) * (strength / 100);
-  } else if (alignment === 'right') {
-    // Estimate text width for right alignment
-    const estimatedWidth = textEl.content.length * (textEl.fontSize * 0.6);
-    alignmentOffset = -estimatedWidth * (strength / 100);
+  // Estimate text width based on content length and font size
+  const estimatedWidth = textEl.content.length * (textEl.fontSize * 0.6);
+  
+  // Apply left alignment (no offset needed, but included for completeness)
+  // Left alignment keeps text at original position, so no offset
+  
+  // Apply center alignment offset
+  if (centerAlignStrength > 0) {
+    const centerOffset = -(estimatedWidth / 2) * (centerAlignStrength / 100);
+    totalOffset += centerOffset;
   }
-  // 'left' alignment needs no offset
   
-  return alignmentOffset;
+  // Apply right alignment offset
+  if (rightAlignStrength > 0) {
+    const rightOffset = -estimatedWidth * (rightAlignStrength / 100);
+    totalOffset += rightOffset;
+  }
+  
+  // Apply left alignment offset (negative offset moves text left)
+  if (leftAlignStrength > 0) {
+    const leftOffset = -(estimatedWidth * 0.2) * (leftAlignStrength / 100);
+    totalOffset += leftOffset;
+  }
+  
+  return totalOffset;
 }
 
 // Helper function to get combined transform from element and all parent groups
@@ -827,11 +883,18 @@ function saveSvgWithFont() {
   convertedGroup.setAttribute("stroke-width", strokeWidth);
   convertedGroup.setAttribute("fill", "none");
   
-  // Hide original text elements (don't delete them)
+  // Hide or keep original text elements based on user preference
   const textNodes = svgDoc.querySelectorAll("text");
-  textNodes.forEach((textNode) => {
-    textNode.setAttribute("style", "display: none;");
-  });
+  if (!keepOriginalText) {
+    textNodes.forEach((textNode) => {
+      textNode.setAttribute("style", "display: none;");
+    });
+  } else {
+    // Keep original text visible but make it lighter for comparison
+    textNodes.forEach((textNode) => {
+      textNode.setAttribute("style", "fill: #cccccc; opacity: 0.7;");
+    });
+  }
   
   // Find the master-text-labels-layer group
   let masterTextLayer = svgDoc.querySelector("#master-text-labels-layer");
@@ -852,7 +915,7 @@ function saveSvgWithFont() {
       console.log(`Converting text element ${index + 1}: "${textEl.content}"`);
       
       // Apply alignment-based positioning (same as preview)
-      const alignmentOffset = calculateAlignmentOffset(textEl, textAlignment, autoCenterStrength);
+      const alignmentOffset = calculateAlignmentOffset(textEl);
       const adjustedX = textEl.x + xOffset + alignmentOffset;
       
       // Apply line spacing: calculate relative position from first line
@@ -867,7 +930,7 @@ function saveSvgWithFont() {
         path.setAttribute("d", pathData);
         path.setAttribute("class", `converted-text-${index}`);
         path.setAttribute("data-original-text", textEl.content);
-        path.setAttribute("data-adjustments", `x:${xOffset},y:${yOffset},scale:${fontScale},letterSpacing:${letterSpacing},lineSpacing:${lineSpacing},alignment:${textAlignment},alignStrength:${autoCenterStrength},strokeWidth:${strokeWidth},strokeColor:${strokeColor}`);
+        path.setAttribute("data-adjustments", `x:${xOffset},y:${yOffset},scale:${fontScale},letterSpacing:${letterSpacing},lineSpacing:${lineSpacing},leftAlign:${leftAlignStrength},centerAlign:${centerAlignStrength},rightAlign:${rightAlignStrength},strokeWidth:${strokeWidth},strokeColor:${strokeColor},keepOriginalText:${keepOriginalText}`);
         convertedGroup.appendChild(path);
         pathsCreated++;
         console.log(`Created path for: "${textEl.content}" at (${adjustedX}, ${adjustedY})`);
@@ -904,7 +967,8 @@ function saveSvgWithFont() {
   
   console.log("SVG export completed");
   const exportStrokeColor = strokeColor === '#ff0000' ? 'black' : strokeColor;
-  alert(`Exported SVG with ${pathsCreated} converted text elements using ${fontSelector.value()}\nAdjustments: X:${xOffset}, Y:${yOffset}, Scale:${(fontScale * 100).toFixed(0)}%\nSpacing: Letter:${letterSpacing.toFixed(1)}x, Line:${lineSpacing.toFixed(1)}x\nAlignment: ${textAlignment} at ${autoCenterStrength}% strength\nStroke: ${strokeWidth}px width, ${exportStrokeColor} color`);
+  const originalTextStatus = keepOriginalText ? 'kept visible (light gray)' : 'hidden';
+  alert(`Exported SVG with ${pathsCreated} converted text elements using ${fontSelector.value()}\nAdjustments: X:${xOffset}, Y:${yOffset}, Scale:${(fontScale * 100).toFixed(0)}%\nSpacing: Letter:${letterSpacing.toFixed(1)}x, Line:${lineSpacing.toFixed(1)}x\nAlignment: Left:${leftAlignStrength}%, Center:${centerAlignStrength}%, Right:${rightAlignStrength}%\nStroke: ${strokeWidth}px width, ${exportStrokeColor} color\nOriginal text: ${originalTextStatus}`);
 }
 
 // Helper function to generate SVG path data from text using the current font
