@@ -17,10 +17,10 @@ let xOffsetSlider, yOffsetSlider, fontSizeSlider, letterSpacingSlider, lineSpaci
 let leftAlignSlider, centerAlignSlider, rightAlignSlider;
 let xOffset = 9, yOffset = 0, fontScale = 1.0; // Scale factor as percentage
 let letterSpacing = 1.0, lineSpacing = 1.0; // Multipliers for spacing
-let leftAlignStrength = 0; // 0-100 percentage for left alignment
-let centerAlignStrength = 0; // 0-100 percentage for center alignment  
-let rightAlignStrength = 0; // 0-100 percentage for right alignment
-let horizontalScaleFactor = 1.0; // Exponential-like scaling factor based on text length
+let leftAlignStrength = 0; // DEPRECATED: 0-100 percentage for left alignment (replaced by text-anchor)
+let centerAlignStrength = 0; // DEPRECATED: 0-100 percentage for center alignment (replaced by text-anchor)  
+let rightAlignStrength = 0; // DEPRECATED: 0-100 percentage for right alignment (replaced by text-anchor)
+let horizontalScaleFactor = 1.0; // DEPRECATED: Exponential-like scaling factor based on text length
 let strokeWidth = 0.5; // Stroke width for single-line text
 let strokeColor = '#ff0000'; // Stroke color for single-line text (red for preview, black for export)
 let zoomLevel = 1.0; // SVG zoom level
@@ -672,31 +672,12 @@ function generateConvertedSvg() {
   convertedGroup.setAttribute("stroke-width", strokeWidth);
   convertedGroup.setAttribute("fill", "none");
   
-  // Calculate base Y position for line spacing
-  let baseY = textElements.length > 0 ? textElements[0].y : 0;
-  
-  // Generate paths for each text element
+  // Generate paths for each text element using new processTextElement function
   let pathsGenerated = 0;
   textElements.forEach((textEl, index) => {
-    if (textEl.content && textEl.content.trim() !== "") {
-      // Apply alignment-based positioning
-      const alignmentOffset = calculateAlignmentOffset(textEl);
-      const adjustedX = textEl.x + xOffset + alignmentOffset;
-      
-      // Apply line spacing: calculate relative position from first line
-      const relativeY = textEl.y - baseY;
-      const adjustedY = baseY + yOffset + (relativeY * lineSpacing);
-      
-      // Calculate font size based on original size and scale factor
-      const scaledFontSize = (textEl.fontSize || 14) * fontScale;
-      const pathData = generateSvgPathForText(textEl.content, adjustedX, adjustedY, scaledFontSize);
-      if (pathData && pathData.trim() !== "") {
-        const path = svgDoc.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("d", pathData);
-        path.setAttribute("class", `preview-converted-${index}`);
-        convertedGroup.appendChild(path);
-        pathsGenerated++;
-      }
+    const result = processTextElement(textEl, svgDoc, convertedGroup, true);
+    if (result) {
+      pathsGenerated++;
     }
   });
   
@@ -728,72 +709,401 @@ function generateConvertedSvg() {
   return serializer.serializeToString(svgDoc);
 }
 
-// Helper function to calculate alignment offset based on individual slider values
-function calculateAlignmentOffset(textEl) {
-  let totalOffset = 0;
-  
-  // Check if text already has built-in alignment via text-anchor
-  const hasBuiltInCenter = textEl.textAnchor === "middle";
-  const hasBuiltInEnd = textEl.textAnchor === "end";
-  
-  console.log(`Text: "${textEl.content}" - existing anchor: ${textEl.textAnchor}`);
-  
-  // If text already has text-anchor="middle", don't apply center alignment
-  // If text already has text-anchor="end", don't apply right alignment
-  if (hasBuiltInCenter && centerAlignStrength > 0) {
-    console.log(`Skipping center alignment - text already has text-anchor="middle"`);
-    // Don't apply center offset, but still allow fine-tuning with other alignments
+// NEW: Process a single text element with bounding box alignment
+// This function implements the multi-stage transformation process:
+// 1. Calculate target bounding box (where original text appears on screen)
+// 2. Generate single-line text at origin and get its bounding box
+// 3. Calculate alignment transform to map generated text to target position
+// 4. Apply user GUI adjustments (X/Y offset, font scale) as outer transforms
+// 5. Apply line spacing as additional vertical offset
+function processTextElement(textElement, svgDoc, parentGroup, isPreview = false) {
+  if (!textElement.content || textElement.content.trim() === "") {
+    return null;
   }
   
-  if (hasBuiltInEnd && rightAlignStrength > 0) {
-    console.log(`Skipping right alignment - text already has text-anchor="end"`);
-    // Don't apply right offset, but still allow fine-tuning with other alignments
+  console.log(`Processing text element: "${textElement.content}"`);
+  
+  // Step 2: Get the "true" bounding box of the original text
+  // This accounts for transforms and text-anchor properties
+  const targetBox = getTransformedBoundingBox(textElement);
+  console.log(`Target bounding box for "${textElement.content}":`, targetBox);
+  
+  // DEBUG: Add visual debugging rectangles (only in preview mode)
+  if (isPreview) {
+    addDebugRectangle(svgDoc, parentGroup, targetBox, "red", `target-${textElement.content.replace(/\s+/g, '_')}`);
   }
   
-  // Get the original (unscaled) font size for proper width estimation
-  const originalFontSize = textEl.fontSize;
-  
-  // Estimate text width in the current coordinate space
-  const estimatedWidth = textEl.content.length * (originalFontSize * 0.6);
-  
-  // Calculate length-based scaling factor (exponential-like effect)
-  const textLength = textEl.content.length;
-  const baseScale = 1.0;
-  const lengthFactor = Math.pow(textLength / 10, horizontalScaleFactor - 1.0);
-  const finalScaleFactor = baseScale * lengthFactor;
-  
-  // Scale the offset back to the original coordinate space
-  let coordinateSpaceScaling = 1.0;
-  if (textEl.scaleX && textEl.scaleX !== 1.0) {
-    coordinateSpaceScaling = 1.0 / textEl.scaleX;
+  // Step 3: Render the single-line font independently at origin
+  // This creates paths at (0,0) with proper letter spacing
+  const generatedGroup = renderSingleLineTextAtOrigin(textElement, svgDoc);
+  if (!generatedGroup) {
+    console.warn(`Failed to generate single-line text for: "${textElement.content}"`);
+    return null;
   }
   
-  console.log(`fontSize: ${originalFontSize}, scaleX: ${textEl.scaleX}, coordinateSpaceScaling: ${coordinateSpaceScaling}`);
+  // Get the bounding box of the generated text
+  const generatedBox = getGroupBoundingBox(generatedGroup);
+  console.log(`Generated bounding box for "${textElement.content}":`, generatedBox);
   
-  // Apply center alignment offset (only if not already centered)
-  if (centerAlignStrength > 0 && !hasBuiltInCenter) {
-    const centerOffset = -(estimatedWidth / 2) * (centerAlignStrength / 100) * finalScaleFactor * coordinateSpaceScaling;
-    totalOffset += centerOffset;
-    console.log(`Center offset: ${centerOffset} (estimated width: ${estimatedWidth})`);
+  // DEBUG: Add visual debugging rectangles (only in preview mode)
+  if (isPreview) {
+    // The generated box is at origin, so we need to show it there
+    addDebugRectangle(svgDoc, parentGroup, generatedBox, "blue", `generated-${textElement.content.replace(/\s+/g, '_')}`);
   }
   
-  // Apply right alignment offset (only if not already right-aligned)
-  if (rightAlignStrength > 0 && !hasBuiltInEnd) {
-    const rightOffset = -estimatedWidth * (rightAlignStrength / 100) * finalScaleFactor * coordinateSpaceScaling;
-    totalOffset += rightOffset;
-    console.log(`Right offset: ${rightOffset}`);
+  // Step 4: Align the new text to the original bounding box
+  // Calculate scale and translation to map generated text to target position
+  const alignTransform = calculateAlignmentTransform(targetBox, generatedBox, textElement);
+  console.log(`Alignment transform for "${textElement.content}":`, alignTransform);
+  console.log(`  Target: ${targetBox.x}, ${targetBox.y}, ${targetBox.width}x${targetBox.height}`);
+  console.log(`  Generated: ${generatedBox.x}, ${generatedBox.y}, ${generatedBox.width}x${generatedBox.height}`);
+  console.log(`  Text anchor: ${textElement.textAnchor}`);
+  console.log(`  Original fontSize: ${textElement.fontSize}, Content length: ${textElement.content.length}`);
+  console.log(`  Scale: ${alignTransform.scale}, Translate: ${alignTransform.translateX}, ${alignTransform.translateY}`);
+  
+  // WARN if scale seems extreme (but allow for heavily scaled text)
+  if (alignTransform.scale > 5 || alignTransform.scale < 0.05) {
+    console.warn(`EXTREME SCALE DETECTED for "${textElement.content}": ${alignTransform.scale}`);
+  } else if (alignTransform.scale < 0.2) {
+    console.log(`Tiny scale detected (expected for heavily scaled text): ${alignTransform.scale}`);
   }
   
-  // Apply left alignment offset (fine-tuning for all text)
-  if (leftAlignStrength > 0) {
-    const leftOffset = -(estimatedWidth * 0.2) * (leftAlignStrength / 100) * finalScaleFactor * coordinateSpaceScaling;
-    totalOffset += leftOffset;
-    console.log(`Left offset: ${leftOffset}`);
+  // Apply the alignment transform to the generated group
+  const alignedGroup = svgDoc.createElementNS("http://www.w3.org/2000/svg", "g");
+  alignedGroup.setAttribute("transform", 
+    `translate(${alignTransform.translateX}, ${alignTransform.translateY}) scale(${alignTransform.scale})`
+  );
+  alignedGroup.appendChild(generatedGroup);
+  
+  // Step 5: Apply universal GUI adjustments as outer transforms
+  // This ensures that GUI adjustments are predictable (10px offset = 10px on screen)
+  const outerGroup = svgDoc.createElementNS("http://www.w3.org/2000/svg", "g");
+  
+  // Calculate line spacing offset for multi-line text
+  const lineSpacingOffset = calculateLineSpacingOffset(textElement);
+  
+  // Calculate center point for scaling in place
+  const centerX = targetBox.x + targetBox.width / 2;
+  const centerY = targetBox.y + targetBox.height / 2;
+  
+  // Apply GUI adjustments: translate to center, scale, translate back, then apply offsets
+  outerGroup.setAttribute("transform", 
+    `translate(${centerX + xOffset}, ${centerY + yOffset + lineSpacingOffset}) scale(${fontScale}) translate(${-centerX}, ${-centerY})`
+  );
+  
+  // Add the aligned group to the outer group for GUI adjustments
+  outerGroup.appendChild(alignedGroup);
+  
+  // Add the final group to the parent
+  parentGroup.appendChild(outerGroup);
+  
+  // DEBUG: Add final position rectangle (only in preview mode)
+  if (isPreview) {
+    // The final box should account for the complex transform chain
+    const finalBox = {
+      x: centerX + xOffset - (targetBox.width * fontScale) / 2,
+      y: centerY + yOffset + lineSpacingOffset - (targetBox.height * fontScale) / 2,
+      width: targetBox.width * fontScale,
+      height: targetBox.height * fontScale
+    };
+    addDebugRectangle(svgDoc, parentGroup, finalBox, "green", `final-${textElement.content.replace(/\s+/g, '_')}`);
   }
   
-  console.log(`Total offset for "${textEl.content}": ${totalOffset}`);
-  return totalOffset;
+  // Add class and data attributes for compatibility
+  const pathElement = generatedGroup.querySelector("path");
+  if (pathElement) {
+    const index = textElements.indexOf(textElement);
+    if (isPreview) {
+      pathElement.setAttribute("class", `preview-converted-${index}`);
+    } else {
+      pathElement.setAttribute("class", `converted-text-${index}`);
+      pathElement.setAttribute("data-original-text", textElement.content);
+      pathElement.setAttribute("data-adjustments", `x:${xOffset},y:${yOffset},scale:${fontScale},letterSpacing:${letterSpacing},lineSpacing:${lineSpacing},leftAlign:${leftAlignStrength},centerAlign:${centerAlignStrength},rightAlign:${rightAlignStrength},horizontalScale:${horizontalScaleFactor},strokeWidth:${strokeWidth},strokeColor:${strokeColor},keepOriginalText:${keepOriginalText}`);
+    }
+  }
+  
+  console.log(`Successfully aligned text: "${textElement.content}"`);
+  return outerGroup;
 }
+
+// Helper function to get the transformed bounding box of a text element
+function getTransformedBoundingBox(textElement) {
+  // The textElement already has transformed coordinates (x, y) and fontSize
+  // We just need to calculate the bounding box in screen coordinates
+  
+  const fontSize = textElement.fontSize || 14;
+  
+  console.log(`Computing target bbox for "${textElement.content}"`);
+  console.log(`  Raw fontSize: ${fontSize}`);
+  console.log(`  ScaleX/Y: ${textElement.scaleX}, ${textElement.scaleY}`);
+  console.log(`  Coords: ${textElement.x}, ${textElement.y}`);
+  
+  // Text width estimation - CORRECTED for coordinate system mismatch
+  // For heavily scaled text, we need to account for the visual scale difference
+  let textWidth;
+  if (currentFont && currentFont.isReady()) {
+    textWidth = estimateTextWidth(textElement.content, fontSize);
+  } else {
+    // Fallback to simple estimation
+    textWidth = textElement.content.length * fontSize * 0.6;
+  }
+  
+  // CRITICAL FIX: For heavily scaled text, we need to match the actual visual scale
+  if (textElement.scaleX && textElement.scaleX < 0.5) {
+    console.log(`  APPLYING SCALE CORRECTION for tiny text - original width: ${textWidth}`);
+    
+    // The core issue: our fontSize is scaled correctly (250 * 0.08 = 20)
+    // but the WIDTH should also reflect the same scale factor
+    // If original text was 250px font with width ~1000px, scaled text should be 20px font with width ~80px
+    
+    // Apply the same scale factor that was applied to the font
+    const originalScale = textElement.scaleX; // This is 0.08 for the tiny text
+    
+    // Our width estimation assumes normal font metrics, but for heavily scaled text,
+    // we should use a proportionally smaller width
+    textWidth = textWidth * originalScale; // Apply the same scale factor
+    
+    console.log(`  CORRECTED width (${originalScale}x): ${textWidth}`);
+  }
+  
+  console.log(`  Final estimated width: ${textWidth}`);
+  
+  // TEMPORARY DEBUG: Check if this is tiny scaled text
+  if (textElement.scaleX && textElement.scaleX < 0.2) {
+    console.log(`  TINY TEXT DETECTED - scale: ${textElement.scaleX}`);
+    console.log(`  fontSize: ${fontSize} (should be ~20 for 0.08 scale)`);
+  }
+  
+  // Height should be based on font metrics
+  const textHeight = fontSize; // This is reasonable for most fonts
+  
+  // Handle text-anchor alignment
+  let anchorOffsetX = 0;
+  if (textElement.textAnchor === "middle") {
+    anchorOffsetX = -textWidth / 2;
+  } else if (textElement.textAnchor === "end") {
+    anchorOffsetX = -textWidth;
+  }
+  
+  const bbox = {
+    x: textElement.x + anchorOffsetX,
+    y: textElement.y - fontSize * 0.8, // Adjust for text baseline
+    width: textWidth,
+    height: textHeight
+  };
+  
+  console.log(`  Final bbox: ${bbox.x}, ${bbox.y}, ${bbox.width}x${bbox.height}`);
+  
+  return bbox;
+}
+
+// Helper function to estimate text width using actual font metrics
+function estimateTextWidth(text, fontSize) {
+  if (!currentFont || !currentFont.isReady()) {
+    return text.length * fontSize * 0.6; // Fallback
+  }
+  
+  const scaleFactor = fontSize / currentFont.unitsPerEm;
+  let totalWidth = 0;
+  
+  for (const char of text) {
+    const glyph = currentFont.glyphs[char];
+    if (glyph && glyph.horizAdvX) {
+      totalWidth += glyph.horizAdvX * scaleFactor * letterSpacing;
+    } else {
+      // Fallback for missing glyphs
+      totalWidth += (300 * scaleFactor * letterSpacing);
+    }
+  }
+  
+  console.log(`Width estimate for "${text}" (fontSize: ${fontSize}): ${totalWidth}`);
+  return totalWidth;
+}
+
+// Helper function to render single-line text at origin (0,0)
+function renderSingleLineTextAtOrigin(textElement, svgDoc) {
+  if (!currentFont || !currentFont.isReady()) {
+    console.log("Font not ready for rendering");
+    return null;
+  }
+  
+  // Create a group to hold the generated paths
+  const group = svgDoc.createElementNS("http://www.w3.org/2000/svg", "g");
+  
+  // Generate paths at origin with the original font size (don't apply fontScale here)
+  const originalFontSize = textElement.fontSize || 14;
+  const pathData = generateSvgPathForText(textElement.content, 0, 0, originalFontSize);
+  
+  if (pathData && pathData.trim() !== "") {
+    const path = svgDoc.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", pathData);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", strokeColor);
+    path.setAttribute("stroke-width", strokeWidth);
+    group.appendChild(path);
+    return group;
+  }
+  
+  return null;
+}
+
+// Helper function to get the bounding box of a group element
+function getGroupBoundingBox(groupElement) {
+  // For now, we'll calculate a rough bounding box based on the path data
+  // In a real browser environment, you'd use groupElement.getBBox()
+  
+  const pathElement = groupElement.querySelector("path");
+  if (!pathElement) {
+    return { x: 0, y: 0, width: 0, height: 0 };
+  }
+  
+  // Parse the path data to get approximate bounds
+  const pathData = pathElement.getAttribute("d");
+  const coords = extractCoordsFromPath(pathData);
+  
+  if (coords.length === 0) {
+    return { x: 0, y: 0, width: 0, height: 0 };
+  }
+  
+  let minX = coords[0].x, maxX = coords[0].x;
+  let minY = coords[0].y, maxY = coords[0].y;
+  
+  coords.forEach(coord => {
+    minX = Math.min(minX, coord.x);
+    maxX = Math.max(maxX, coord.x);
+    minY = Math.min(minY, coord.y);
+    maxY = Math.max(maxY, coord.y);
+  });
+  
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY
+  };
+}
+
+// Helper function to extract coordinates from SVG path data
+function extractCoordsFromPath(pathData) {
+  const coords = [];
+  
+  // Parse path commands more accurately for single-line fonts
+  // Single-line fonts typically use M (move) and L (line) commands
+  const commands = pathData.match(/[ML]\s*[-+]?[0-9]*\.?[0-9]+\s*[-+]?[0-9]*\.?[0-9]+/g);
+  
+  if (commands) {
+    commands.forEach(cmd => {
+      // Extract the numeric coordinates from each command
+      const numbers = cmd.match(/[-+]?[0-9]*\.?[0-9]+/g);
+      if (numbers && numbers.length >= 2) {
+        coords.push({
+          x: parseFloat(numbers[0]),
+          y: parseFloat(numbers[1])
+        });
+      }
+    });
+  }
+  
+  // Fallback to the old method if no commands found
+  if (coords.length === 0) {
+    const matches = pathData.match(/[-+]?[0-9]*\.?[0-9]+/g);
+    if (matches) {
+      for (let i = 0; i < matches.length; i += 2) {
+        if (i + 1 < matches.length) {
+          coords.push({
+            x: parseFloat(matches[i]),
+            y: parseFloat(matches[i + 1])
+          });
+        }
+      }
+    }
+  }
+  
+  return coords;
+}
+
+// DEBUG: Helper function to add visual debugging rectangles
+function addDebugRectangle(svgDoc, parentGroup, box, color, id) {
+  const rect = svgDoc.createElementNS("http://www.w3.org/2000/svg", "rect");
+  rect.setAttribute("x", box.x);
+  rect.setAttribute("y", box.y);
+  rect.setAttribute("width", box.width);
+  rect.setAttribute("height", box.height);
+  rect.setAttribute("fill", "none");
+  rect.setAttribute("stroke", color);
+  rect.setAttribute("stroke-width", "1");
+  rect.setAttribute("stroke-dasharray", "3,3");
+  rect.setAttribute("id", `debug-${id}`);
+  rect.setAttribute("opacity", "0.7");
+  parentGroup.appendChild(rect);
+}
+
+// Helper function to calculate alignment transform from generated box to target box
+function calculateAlignmentTransform(targetBox, generatedBox, textElement) {
+  // Handle edge cases where bounding boxes might be invalid
+  if (!targetBox || !generatedBox || generatedBox.width === 0 || generatedBox.height === 0) {
+    console.warn("Invalid bounding boxes for alignment calculation");
+    return {
+      translateX: 0,
+      translateY: 0,
+      scale: 1
+    };
+  }
+  
+  // Calculate scale based on target box dimensions
+  // Use X-scale for both dimensions to maintain aspect ratio
+  const scaleX = targetBox.width / generatedBox.width;
+  const scaleY = targetBox.height / generatedBox.height;
+  const finalScale = scaleX; // Use X-scale to maintain aspect ratio
+  
+  // Ensure scale is reasonable (prevent extreme scaling)
+  const clampedScale = Math.max(0.1, Math.min(10, finalScale));
+  
+  // Calculate translation based on text-anchor or default to left alignment
+  let translateX, translateY;
+  
+  // Handle horizontal alignment based on text-anchor
+  if (textElement.textAnchor === "middle") {
+    // Center align
+    translateX = (targetBox.x + targetBox.width / 2) - (generatedBox.x + generatedBox.width / 2) * clampedScale;
+  } else if (textElement.textAnchor === "end") {
+    // Right align
+    translateX = (targetBox.x + targetBox.width) - (generatedBox.x + generatedBox.width) * clampedScale;
+  } else {
+    // Left align (default)
+    translateX = targetBox.x - generatedBox.x * clampedScale;
+  }
+  
+  // Vertical alignment (typically center)
+  translateY = (targetBox.y + targetBox.height / 2) - (generatedBox.y + generatedBox.height / 2) * clampedScale;
+  
+  return {
+    translateX: translateX,
+    translateY: translateY,
+    scale: clampedScale
+  };
+}
+
+// Helper function to calculate line spacing offset for a text element
+function calculateLineSpacingOffset(textElement) {
+  // Find the first text element to use as baseline
+  const baseY = textElements.length > 0 ? textElements[0].y : 0;
+  
+  // Calculate relative position from first line
+  const relativeY = textElement.y - baseY;
+  
+  // Apply line spacing multiplier to the relative position
+  const adjustedRelativeY = relativeY * lineSpacing;
+  
+  // Return the additional offset (difference from original position)
+  return adjustedRelativeY - relativeY;
+}
+
+// DEPRECATED: Old alignment calculation function - replaced by bounding box approach
+// This function is kept for reference but is no longer used
+
+// DEPRECATED: Old legacy text processing function - replaced by bounding box approach
+// This function has been removed as it's no longer needed
 
 // Helper function to get combined transform from element and all parent groups
 function getCombinedTransform(element) {
@@ -985,38 +1295,13 @@ function saveSvgWithFont() {
     svgRoot.appendChild(masterTextLayer);
   }
   
-  // Calculate base Y position for line spacing (same as preview)
-  let baseY = textElements.length > 0 ? textElements[0].y : 0;
-  
-  // Generate converted paths for each text element
+  // Generate converted paths for each text element using new processTextElement function
   let pathsCreated = 0;
   textElements.forEach((textEl, index) => {
-    if (textEl.content && textEl.content.trim() !== "") {
-      console.log(`Converting text element ${index + 1}: "${textEl.content}"`);
-      
-      // Apply alignment-based positioning (same as preview)
-      const alignmentOffset = calculateAlignmentOffset(textEl);
-      const adjustedX = textEl.x + xOffset + alignmentOffset;
-      
-      // Apply line spacing: calculate relative position from first line
-      const relativeY = textEl.y - baseY;
-      const adjustedY = baseY + yOffset + (relativeY * lineSpacing);
-      
-      // Generate path data for the text using the current font and adjustments
-      const scaledFontSize = (textEl.fontSize || 14) * fontScale;
-      const pathData = generateSvgPathForText(textEl.content, adjustedX, adjustedY, scaledFontSize);
-      if (pathData && pathData.trim() !== "") {
-        const path = svgDoc.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("d", pathData);
-        path.setAttribute("class", `converted-text-${index}`);
-        path.setAttribute("data-original-text", textEl.content);
-        path.setAttribute("data-adjustments", `x:${xOffset},y:${yOffset},scale:${fontScale},letterSpacing:${letterSpacing},lineSpacing:${lineSpacing},leftAlign:${leftAlignStrength},centerAlign:${centerAlignStrength},rightAlign:${rightAlignStrength},horizontalScale:${horizontalScaleFactor},strokeWidth:${strokeWidth},strokeColor:${strokeColor},keepOriginalText:${keepOriginalText}`);
-        convertedGroup.appendChild(path);
-        pathsCreated++;
-        console.log(`Created path for: "${textEl.content}" at (${adjustedX}, ${adjustedY})`);
-      } else {
-        console.warn(`No path data generated for: "${textEl.content}"`);
-      }
+    console.log(`Converting text element ${index + 1}: "${textEl.content}"`);
+    const result = processTextElement(textEl, svgDoc, convertedGroup, false);
+    if (result) {
+      pathsCreated++;
     }
   });
   
