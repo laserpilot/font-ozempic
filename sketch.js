@@ -428,6 +428,20 @@ function setup() {
   checkboxInfo.style('margin', '0 0 15px 0');
   checkboxInfo.style('line-height', '1.3');
   
+  // Warning messages section
+  let warningDiv = createDiv('');
+  warningDiv.parent(controlsDiv);
+  warningDiv.id('warning-messages');
+  warningDiv.style('margin', '0 0 20px 0');
+  warningDiv.style('padding', '10px');
+  warningDiv.style('background-color', '#fff3cd');
+  warningDiv.style('border', '1px solid #ffeaa7');
+  warningDiv.style('border-radius', '4px');
+  warningDiv.style('color', '#856404');
+  warningDiv.style('font-size', '12px');
+  warningDiv.style('line-height', '1.4');
+  warningDiv.style('display', 'none'); // Hidden by default
+  
   // Action buttons section
   let actionsLabel = createP('Actions:');
   actionsLabel.parent(controlsDiv);
@@ -840,72 +854,34 @@ function processTextElement(textElement, svgDoc, parentGroup, isPreview = false)
 
 // Helper function to get the transformed bounding box of a text element
 function getTransformedBoundingBox(textElement) {
-  // The textElement already has transformed coordinates (x, y) and fontSize
-  // We just need to calculate the bounding box in screen coordinates
+  // PURE COORDINATE SYSTEM: Use original fontSize and apply transform scaling
+  // This eliminates the double scaling issue completely
   
-  const fontSize = textElement.fontSize || 14;
+  const originalFontSize = textElement.fontSize || 14; // Now the original, unscaled fontSize
+  const transformScaleX = textElement.transformScaleX || textElement.scaleX || 1;
+  const transformScaleY = textElement.transformScaleY || textElement.scaleY || 1;
   
   console.log(`Computing target bbox for "${textElement.content}"`);
-  console.log(`  Raw fontSize: ${fontSize}`);
-  console.log(`  ScaleX/Y: ${textElement.scaleX}, ${textElement.scaleY}`);
+  console.log(`  Original fontSize: ${originalFontSize}`);
+  console.log(`  Transform scaleX/Y: ${transformScaleX}, ${transformScaleY}`);
   console.log(`  Coords: ${textElement.x}, ${textElement.y}`);
-  console.log(`  Will apply visual scale correction: ${textElement.scaleX && textElement.scaleX < 0.15}`);
-  console.log(`  textElement.scaleX value: ${textElement.scaleX} (type: ${typeof textElement.scaleX})`);
   
-  // Text width estimation - CORRECTED for coordinate system mismatch
-  // For heavily scaled text, we need to account for the visual scale difference
+  // Calculate width using original fontSize, then apply transform scaling
   let textWidth;
   if (currentFont && currentFont.isReady()) {
-    textWidth = estimateTextWidth(textElement.content, fontSize);
+    textWidth = estimateTextWidth(textElement.content, originalFontSize);
   } else {
     // Fallback to simple estimation
-    textWidth = textElement.content.length * fontSize * 0.6;
+    textWidth = textElement.content.length * originalFontSize * 0.6;
   }
   
-  // CRITICAL: For target box calculation, we need the VISUAL width
-  // Only apply this correction to EXTREMELY tiny text (scale < 0.1)
-  const shouldApplyCorrection = textElement.scaleX && textElement.scaleX < 0.1;
-  console.log(`  Scale correction decision: scaleX=${textElement.scaleX}, shouldApply=${shouldApplyCorrection}`);
+  // Apply transform scaling to get final visual size
+  textWidth = textWidth * transformScaleX;
   
-  if (shouldApplyCorrection) {
-    console.log(`  APPLYING VISUAL SCALE CORRECTION for extremely tiny text - original width: ${textWidth}`);
-    console.log(`  Scale: ${textElement.scaleX} (only correcting if < 0.1)`);
-    
-    // The target box should represent the visual size, which is smaller for heavily scaled text
-    // The textElement.fontSize is already scaled (e.g., 250 * 0.08 = 20)
-    // But the visual width needs to account for the scaling context
-    const visualScale = textElement.scaleX; // This is 0.08 for the tiny text
-    textWidth = textWidth * visualScale;
-    
-    console.log(`  CORRECTED target box width (${visualScale}x): ${textWidth}`);
-  } else {
-    console.log(`  NO SCALE CORRECTION - scale: ${textElement.scaleX} (>= 0.1 or undefined)`);
-  }
+  // Calculate height using original fontSize, then apply transform scaling
+  let textHeight = originalFontSize * transformScaleY;
   
-  console.log(`  Final estimated width: ${textWidth}`);
-  
-  // TEMPORARY DEBUG: Check if this is tiny scaled text
-  if (textElement.scaleX && textElement.scaleX < 0.09) {
-    console.log(`  TINY TEXT DETECTED - scale: ${textElement.scaleX}`);
-    console.log(`  fontSize: ${fontSize} (should be ~20 for 0.08 scale)`);
-    console.log(`  textWidth: ${textWidth} (this determines red box width)`);
-    console.log(`  letterSpacing being used: ${letterSpacing}`);
-  }
-  
-  // Height should be based on font metrics
-  let textHeight = fontSize; // This is reasonable for most fonts
-  
-  // CRITICAL: For target box calculation, we need the VISUAL height
-  // Only apply this correction to EXTREMELY tiny text (scale < 0.1)
-  if (textElement.scaleX && textElement.scaleX < 0.1) {
-    console.log(`  APPLYING VISUAL HEIGHT SCALE CORRECTION for extremely tiny text - original height: ${textHeight}`);
-    
-    // The target box should represent the visual size, which is smaller for heavily scaled text
-    const visualScale = textElement.scaleX; // This is 0.08 for the tiny text
-    textHeight = textHeight * visualScale;
-    
-    console.log(`  CORRECTED target box height (${visualScale}x): ${textHeight}`);
-  }
+  console.log(`  Estimated dimensions: ${textWidth}w x ${textHeight}h (after transform scaling)`);
   
   // Handle text-anchor alignment
   let anchorOffsetX = 0;
@@ -915,20 +891,8 @@ function getTransformedBoundingBox(textElement) {
     anchorOffsetX = -textWidth;
   }
   
-  // Calculate Y position with proper baseline adjustment
-  let baselineAdjustment = fontSize * 0.8; // Standard baseline adjustment
-  
-  // CRITICAL: For target box calculation, we need the VISUAL baseline adjustment
-  // Only apply this correction to EXTREMELY tiny text (scale < 0.1)
-  if (textElement.scaleX && textElement.scaleX < 0.1) {
-    console.log(`  APPLYING VISUAL BASELINE SCALE CORRECTION for extremely tiny text - original baseline: ${baselineAdjustment}`);
-    
-    // The target box should represent the visual size, which is smaller for heavily scaled text
-    const visualScale = textElement.scaleX; // This is 0.08 for the tiny text
-    baselineAdjustment = baselineAdjustment * visualScale;
-    
-    console.log(`  CORRECTED target box baseline (${visualScale}x): ${baselineAdjustment}`);
-  }
+  // Calculate Y position with baseline adjustment (also scaled)
+  const baselineAdjustment = (originalFontSize * 0.8) * transformScaleY;
   
   const bbox = {
     x: textElement.x + anchorOffsetX,
@@ -995,10 +959,10 @@ function renderSingleLineTextAtOrigin(textElement, svgDoc) {
   // Create a group to hold the generated paths
   const group = svgDoc.createElementNS("http://www.w3.org/2000/svg", "g");
   
-  // Generate paths at origin with the EFFECTIVE font size (already scaled)
-  // This is critical: textElement.fontSize is already the effective size after transforms
-  const effectiveFontSize = textElement.fontSize || 14;
-  const pathData = generateSvgPathForText(textElement.content, 0, 0, effectiveFontSize);
+  // PURE COORDINATE SYSTEM: Generate paths at origin with ORIGINAL font size
+  // This creates large, natural-sized text that will be scaled down by calculateAlignmentTransform
+  const originalFontSize = textElement.fontSize || 14; // Now the original, unscaled fontSize
+  const pathData = generateSvgPathForText(textElement.content, 0, 0, originalFontSize);
   
   if (pathData && pathData.trim() !== "") {
     const path = svgDoc.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -1128,16 +1092,24 @@ function calculateAlignmentTransform(targetBox, generatedBox, textElement) {
   console.log(`  Scale X: ${scaleX}, Scale Y: ${scaleY}`);
   console.log(`  Final scale: ${finalScale}`);
   
-  // EXPERIMENTAL: For tiny text, check if the scale seems wrong
-  if (textElement.scaleX && textElement.scaleX < 0.5) {
-    console.log(`  TINY TEXT scale analysis:`);
-    console.log(`    Original text scale: ${textElement.scaleX}`);
-    console.log(`    Calculated scale: ${finalScale}`);
-    console.log(`    Expected scale should be close to 1.0 for proper font scaling`);
+  // PURE COORDINATE SYSTEM: The scale should now match the transform scale
+  const expectedScale = textElement.transformScaleX || textElement.scaleX || 1;
+  console.log(`  Expected scale (from transform): ${expectedScale}`);
+  console.log(`  Scale match: ${Math.abs(finalScale - expectedScale) < 0.05 ? 'GOOD' : 'MISMATCH'}`);
+  
+  // Calculate what the final rendered size should be
+  const predictedWidth = generatedBox.width * finalScale;
+  const predictedHeight = generatedBox.height * finalScale;
+  console.log(`  Predicted final size: ${predictedWidth.toFixed(1)}w x ${predictedHeight.toFixed(1)}h`);
+  console.log(`  Target size: ${targetBox.width.toFixed(1)}w x ${targetBox.height.toFixed(1)}h`);
+  
+  if (Math.abs(finalScale - expectedScale) > 0.1) {
+    console.warn(`  SCALE MISMATCH: calculated ${finalScale} vs expected ${expectedScale}`);
   }
   
   // Ensure scale is reasonable (prevent extreme scaling)
-  const clampedScale = Math.max(0.1, Math.min(10, finalScale));
+  // Allow small scales for heavily transformed text (e.g., 0.05, 0.08)
+  const clampedScale = Math.max(0.01, Math.min(10, finalScale));
   
   // Calculate translation based on text-anchor or default to left alignment
   let translateX, translateY;
@@ -1185,15 +1157,41 @@ function calculateLineSpacingOffset(textElement) {
 // DEPRECATED: Old legacy text processing function - replaced by bounding box approach
 // This function has been removed as it's no longer needed
 
+// Helper function to display warnings in the UI
+function displayWarning(message) {
+  const warningDiv = document.getElementById('warning-messages');
+  if (warningDiv) {
+    warningDiv.style.display = 'block';
+    warningDiv.innerHTML += `<div>⚠️ ${message}</div>`;
+  }
+}
+
+// Helper function to clear warnings
+function clearWarnings() {
+  const warningDiv = document.getElementById('warning-messages');
+  if (warningDiv) {
+    warningDiv.style.display = 'none';
+    warningDiv.innerHTML = '';
+  }
+}
+
 // Helper function to get combined transform from element and all parent groups
 function getCombinedTransform(element) {
-  let totalTransform = { translateX: 0, translateY: 0, scaleX: 1, scaleY: 1 };
+  let totalTransform = { translateX: 0, translateY: 0, scaleX: 1, scaleY: 1, hasRotation: false };
   let currentElement = element;
   
   // Walk up the DOM tree to collect transforms
   while (currentElement && currentElement.nodeType === Node.ELEMENT_NODE) {
     const transform = currentElement.getAttribute("transform");
     if (transform) {
+      // Check for rotation transforms (unsupported)
+      if (transform.includes("rotate(")) {
+        totalTransform.hasRotation = true;
+        const elementId = currentElement.id || currentElement.tagName;
+        console.warn(`Warning: Rotation transform detected in element ${elementId}. Text positioning may be inaccurate.`);
+        displayWarning(`Rotation transform detected in element "${elementId}". Text positioning may be inaccurate.`);
+      }
+      
       // Parse translate
       const translateMatch = transform.match(/translate\(([^)]+)\)/);
       if (translateMatch) {
@@ -1216,9 +1214,56 @@ function getCombinedTransform(element) {
   return totalTransform;
 }
 
+// Helper function to get font size with CSS-aware priority
+function getFontSize(element, svgDoc) {
+  let fontSize = 14; // default
+  
+  // Priority 1: CSS styles (highest priority)
+  const className = element.getAttribute("class");
+  if (className && svgDoc) {
+    const styleElement = svgDoc.querySelector("style");
+    if (styleElement) {
+      const cssContent = styleElement.textContent || "";
+      // Look for CSS rule matching the class
+      const classRegex = new RegExp(`\\.${className}\\s*\\{[^}]*font-size:\\s*([0-9.]+)px?[^}]*\\}`, 'i');
+      const match = cssContent.match(classRegex);
+      if (match) {
+        fontSize = parseFloat(match[1]);
+        console.log(`    Found CSS font-size: ${fontSize}px for class .${className}`);
+        return fontSize;
+      }
+    }
+  }
+  
+  // Priority 2: Inline style attribute
+  const style = element.getAttribute("style") || "";
+  if (style.includes("font-size:")) {
+    const match = style.match(/font-size:\s*([0-9.]+)/);
+    if (match) {
+      fontSize = parseFloat(match[1]);
+      console.log(`    Found inline style font-size: ${fontSize}`);
+      return fontSize;
+    }
+  }
+  
+  // Priority 3: font-size attribute (lowest priority)
+  const fontSizeAttr = element.getAttribute("font-size");
+  if (fontSizeAttr) {
+    fontSize = parseFloat(fontSizeAttr);
+    console.log(`    Found font-size attribute: ${fontSize}`);
+    return fontSize;
+  }
+  
+  console.log(`    Using default font-size: ${fontSize}`);
+  return fontSize;
+}
+
 function parseTargetSvg() {
   const parser = new DOMParser();
   const svgDoc = parser.parseFromString(targetSvgData, "text/xml");
+  
+  // Clear any previous warnings
+  clearWarnings();
   
   textElements = [];
   const textNodes = svgDoc.querySelectorAll("text");
@@ -1239,36 +1284,31 @@ function parseTargetSvg() {
         let y = parseFloat(tspan.getAttribute("y") || textNode.getAttribute("y") || 100);
         const className = textNode.getAttribute("class") || "";
         
-        // Extract font size from style or font-size attribute
-        let fontSize = 14; // default
-        const style = textNode.getAttribute("style") || tspan.getAttribute("style") || "";
-        const fontSizeAttr = textNode.getAttribute("font-size") || tspan.getAttribute("font-size");
-        if (fontSizeAttr) {
-          fontSize = parseFloat(fontSizeAttr);
-        } else if (style.includes("font-size:")) {
-          const match = style.match(/font-size:\s*([0-9.]+)/);
-          if (match) fontSize = parseFloat(match[1]);
-        }
+        // Extract font size with CSS-aware priority
+        const fontSize = getFontSize(tspan, svgDoc) || getFontSize(textNode, svgDoc);
         
         // Apply the combined transform to coordinates
         const finalX = combinedTransform.translateX + (x * combinedTransform.scaleX);
         const finalY = combinedTransform.translateY + (y * combinedTransform.scaleY);
-        const finalFontSize = fontSize * combinedTransform.scaleY; // Scale font size too
+        // PURE COORDINATE SYSTEM: Store original fontSize and transform scales separately
+        // const finalFontSize = fontSize * combinedTransform.scaleY; // OLD: Pre-scaling caused double scaling
         
         // Check for existing text-anchor attribute
         const textAnchor = textNode.getAttribute("text-anchor") || tspan.getAttribute("text-anchor") || "start";
         
         if (textContent && textContent.trim() !== "") {
-          console.log(`Found tspan text: "${textContent}" at (${finalX}, ${finalY}) [fontSize: ${finalFontSize}, scaleX: ${combinedTransform.scaleX}, anchor: ${textAnchor}]`);
+          console.log(`Found tspan text: "${textContent}" at (${finalX}, ${finalY}) [fontSize: ${fontSize}, transformScale: ${combinedTransform.scaleY}, scaleX: ${combinedTransform.scaleX}, anchor: ${textAnchor}]`);
           textElements.push({
             content: textContent.trim(),
             x: finalX,
             y: finalY,
-            fontSize: finalFontSize,
+            fontSize: fontSize, // Store original, unscaled fontSize
+            transformScaleX: combinedTransform.scaleX, // Store transform scales separately
+            transformScaleY: combinedTransform.scaleY,
             className: className,
             originalNode: tspan,
             parentTextNode: textNode,
-            scaleX: combinedTransform.scaleX,
+            scaleX: combinedTransform.scaleX, // Keep for backward compatibility during refactor
             scaleY: combinedTransform.scaleY,
             textAnchor: textAnchor
           });
@@ -1281,35 +1321,30 @@ function parseTargetSvg() {
       let y = parseFloat(textNode.getAttribute("y") || 100);
       const className = textNode.getAttribute("class") || "";
       
-      // Extract font size from style or font-size attribute
-      let fontSize = 14; // default
-      const style = textNode.getAttribute("style") || "";
-      const fontSizeAttr = textNode.getAttribute("font-size");
-      if (fontSizeAttr) {
-        fontSize = parseFloat(fontSizeAttr);
-      } else if (style.includes("font-size:")) {
-        const match = style.match(/font-size:\s*([0-9.]+)/);
-        if (match) fontSize = parseFloat(match[1]);
-      }
+      // Extract font size with CSS-aware priority
+      const fontSize = getFontSize(textNode, svgDoc);
       
       // Apply the combined transform to coordinates
       const finalX = combinedTransform.translateX + (x * combinedTransform.scaleX);
       const finalY = combinedTransform.translateY + (y * combinedTransform.scaleY);
-      const finalFontSize = fontSize * combinedTransform.scaleY; // Scale font size too
+      // PURE COORDINATE SYSTEM: Store original fontSize and transform scales separately
+      // const finalFontSize = fontSize * combinedTransform.scaleY; // OLD: Pre-scaling caused double scaling
       
       // Check for existing text-anchor attribute
       const textAnchor = textNode.getAttribute("text-anchor") || "start";
       
       if (textContent && textContent.trim() !== "") {
-        console.log(`Found text: "${textContent}" at (${finalX}, ${finalY}) [fontSize: ${finalFontSize}, scaleX: ${combinedTransform.scaleX}, anchor: ${textAnchor}]`);
+        console.log(`Found text: "${textContent}" at (${finalX}, ${finalY}) [fontSize: ${fontSize}, transformScale: ${combinedTransform.scaleY}, scaleX: ${combinedTransform.scaleX}, anchor: ${textAnchor}]`);
         textElements.push({
           content: textContent.trim(),
           x: finalX,
           y: finalY,
-          fontSize: finalFontSize,
+          fontSize: fontSize, // Store original, unscaled fontSize
+          transformScaleX: combinedTransform.scaleX, // Store transform scales separately
+          transformScaleY: combinedTransform.scaleY,
           className: className,
           originalNode: textNode,
-          scaleX: combinedTransform.scaleX,
+          scaleX: combinedTransform.scaleX, // Keep for backward compatibility during refactor
           scaleY: combinedTransform.scaleY,
           textAnchor: textAnchor
         });
