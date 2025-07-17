@@ -262,7 +262,10 @@ function setup() {
     value.style('font-size', '13px');
     value.style('font-weight', 'bold');
     
-    slider.input(() => updateFunc(slider, value));
+    slider.input(() => {
+      console.log(`Slider changed: ${label} = ${slider.value()}`);
+      updateFunc(slider, value);
+    });
     
     return slider;
   }
@@ -484,7 +487,14 @@ function fontChanged() {
       if (currentFont.isReady()) {
         clearInterval(checkInterval);
         console.log(`Font ${selectedFont} loaded successfully`);
-        updateDisplay();
+        // Warm up font metrics cache to ensure consistent calculations
+        warmupFontMetrics();
+        // Add a longer delay to ensure font metrics are fully processed and cached
+        setTimeout(() => {
+          // Force a second warmup to ensure consistency
+          warmupFontMetrics();
+          updateDisplay();
+        }, 200);
       }
     }, 100);
     
@@ -618,9 +628,10 @@ function displayConvertedSvg() {
     return;
   }
   
-  console.log("Displaying converted SVG");
+  console.log("=== DISPLAY CONVERTED SVG START ===");
   console.log(`Current font ready: ${currentFont.isReady()}`);
   console.log(`Glyphs available: ${Object.keys(currentFont.glyphs).length}`);
+  console.log(`letterSpacing: ${letterSpacing}`);
   
   // Generate SVG with converted paths
   let svgContent = generateConvertedSvg();
@@ -685,6 +696,7 @@ function generateConvertedSvg() {
   svgRoot.appendChild(convertedGroup);
   
   console.log(`Generated ${pathsGenerated} paths for preview`);
+  console.log("=== DISPLAY CONVERTED SVG END ===");
   
   // Apply zoom via viewBox manipulation for proper zooming
   const originalWidth = parseFloat(svgRoot.getAttribute("width")) || 842;
@@ -837,6 +849,8 @@ function getTransformedBoundingBox(textElement) {
   console.log(`  Raw fontSize: ${fontSize}`);
   console.log(`  ScaleX/Y: ${textElement.scaleX}, ${textElement.scaleY}`);
   console.log(`  Coords: ${textElement.x}, ${textElement.y}`);
+  console.log(`  Will apply visual scale correction: ${textElement.scaleX && textElement.scaleX < 0.15}`);
+  console.log(`  textElement.scaleX value: ${textElement.scaleX} (type: ${typeof textElement.scaleX})`);
   
   // Text width estimation - CORRECTED for coordinate system mismatch
   // For heavily scaled text, we need to account for the visual scale difference
@@ -848,34 +862,50 @@ function getTransformedBoundingBox(textElement) {
     textWidth = textElement.content.length * fontSize * 0.6;
   }
   
-  // CRITICAL FIX: For heavily scaled text, we need to match the actual visual scale
-  if (textElement.scaleX && textElement.scaleX < 0.5) {
-    console.log(`  APPLYING SCALE CORRECTION for tiny text - original width: ${textWidth}`);
+  // CRITICAL: For target box calculation, we need the VISUAL width
+  // Only apply this correction to EXTREMELY tiny text (scale < 0.1)
+  const shouldApplyCorrection = textElement.scaleX && textElement.scaleX < 0.1;
+  console.log(`  Scale correction decision: scaleX=${textElement.scaleX}, shouldApply=${shouldApplyCorrection}`);
+  
+  if (shouldApplyCorrection) {
+    console.log(`  APPLYING VISUAL SCALE CORRECTION for extremely tiny text - original width: ${textWidth}`);
+    console.log(`  Scale: ${textElement.scaleX} (only correcting if < 0.1)`);
     
-    // The core issue: our fontSize is scaled correctly (250 * 0.08 = 20)
-    // but the WIDTH should also reflect the same scale factor
-    // If original text was 250px font with width ~1000px, scaled text should be 20px font with width ~80px
+    // The target box should represent the visual size, which is smaller for heavily scaled text
+    // The textElement.fontSize is already scaled (e.g., 250 * 0.08 = 20)
+    // But the visual width needs to account for the scaling context
+    const visualScale = textElement.scaleX; // This is 0.08 for the tiny text
+    textWidth = textWidth * visualScale;
     
-    // Apply the same scale factor that was applied to the font
-    const originalScale = textElement.scaleX; // This is 0.08 for the tiny text
-    
-    // Our width estimation assumes normal font metrics, but for heavily scaled text,
-    // we should use a proportionally smaller width
-    textWidth = textWidth * originalScale; // Apply the same scale factor
-    
-    console.log(`  CORRECTED width (${originalScale}x): ${textWidth}`);
+    console.log(`  CORRECTED target box width (${visualScale}x): ${textWidth}`);
+  } else {
+    console.log(`  NO SCALE CORRECTION - scale: ${textElement.scaleX} (>= 0.1 or undefined)`);
   }
   
   console.log(`  Final estimated width: ${textWidth}`);
   
   // TEMPORARY DEBUG: Check if this is tiny scaled text
-  if (textElement.scaleX && textElement.scaleX < 0.2) {
+  if (textElement.scaleX && textElement.scaleX < 0.09) {
     console.log(`  TINY TEXT DETECTED - scale: ${textElement.scaleX}`);
     console.log(`  fontSize: ${fontSize} (should be ~20 for 0.08 scale)`);
+    console.log(`  textWidth: ${textWidth} (this determines red box width)`);
+    console.log(`  letterSpacing being used: ${letterSpacing}`);
   }
   
   // Height should be based on font metrics
-  const textHeight = fontSize; // This is reasonable for most fonts
+  let textHeight = fontSize; // This is reasonable for most fonts
+  
+  // CRITICAL: For target box calculation, we need the VISUAL height
+  // Only apply this correction to EXTREMELY tiny text (scale < 0.1)
+  if (textElement.scaleX && textElement.scaleX < 0.1) {
+    console.log(`  APPLYING VISUAL HEIGHT SCALE CORRECTION for extremely tiny text - original height: ${textHeight}`);
+    
+    // The target box should represent the visual size, which is smaller for heavily scaled text
+    const visualScale = textElement.scaleX; // This is 0.08 for the tiny text
+    textHeight = textHeight * visualScale;
+    
+    console.log(`  CORRECTED target box height (${visualScale}x): ${textHeight}`);
+  }
   
   // Handle text-anchor alignment
   let anchorOffsetX = 0;
@@ -885,9 +915,24 @@ function getTransformedBoundingBox(textElement) {
     anchorOffsetX = -textWidth;
   }
   
+  // Calculate Y position with proper baseline adjustment
+  let baselineAdjustment = fontSize * 0.8; // Standard baseline adjustment
+  
+  // CRITICAL: For target box calculation, we need the VISUAL baseline adjustment
+  // Only apply this correction to EXTREMELY tiny text (scale < 0.1)
+  if (textElement.scaleX && textElement.scaleX < 0.1) {
+    console.log(`  APPLYING VISUAL BASELINE SCALE CORRECTION for extremely tiny text - original baseline: ${baselineAdjustment}`);
+    
+    // The target box should represent the visual size, which is smaller for heavily scaled text
+    const visualScale = textElement.scaleX; // This is 0.08 for the tiny text
+    baselineAdjustment = baselineAdjustment * visualScale;
+    
+    console.log(`  CORRECTED target box baseline (${visualScale}x): ${baselineAdjustment}`);
+  }
+  
   const bbox = {
     x: textElement.x + anchorOffsetX,
-    y: textElement.y - fontSize * 0.8, // Adjust for text baseline
+    y: textElement.y - baselineAdjustment, // Adjust for text baseline
     width: textWidth,
     height: textHeight
   };
@@ -900,6 +945,7 @@ function getTransformedBoundingBox(textElement) {
 // Helper function to estimate text width using actual font metrics
 function estimateTextWidth(text, fontSize) {
   if (!currentFont || !currentFont.isReady()) {
+    console.log(`Font not ready, using fallback width for "${text}"`);
     return text.length * fontSize * 0.6; // Fallback
   }
   
@@ -916,8 +962,27 @@ function estimateTextWidth(text, fontSize) {
     }
   }
   
-  console.log(`Width estimate for "${text}" (fontSize: ${fontSize}): ${totalWidth}`);
+  console.log(`Width estimate for "${text}" (fontSize: ${fontSize}, letterSpacing: ${letterSpacing}): ${totalWidth}`);
   return totalWidth;
+}
+
+// Helper function to warm up font metrics cache
+function warmupFontMetrics() {
+  if (!currentFont || !currentFont.isReady()) {
+    return;
+  }
+  
+  // Pre-calculate some common metrics to ensure consistency
+  const testChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ";
+  for (const char of testChars) {
+    const glyph = currentFont.glyphs[char];
+    if (glyph) {
+      // Just access the metrics to ensure they're cached
+      const width = glyph.horizAdvX;
+    }
+  }
+  
+  console.log("Font metrics warmed up");
 }
 
 // Helper function to render single-line text at origin (0,0)
@@ -930,9 +995,10 @@ function renderSingleLineTextAtOrigin(textElement, svgDoc) {
   // Create a group to hold the generated paths
   const group = svgDoc.createElementNS("http://www.w3.org/2000/svg", "g");
   
-  // Generate paths at origin with the original font size (don't apply fontScale here)
-  const originalFontSize = textElement.fontSize || 14;
-  const pathData = generateSvgPathForText(textElement.content, 0, 0, originalFontSize);
+  // Generate paths at origin with the EFFECTIVE font size (already scaled)
+  // This is critical: textElement.fontSize is already the effective size after transforms
+  const effectiveFontSize = textElement.fontSize || 14;
+  const pathData = generateSvgPathForText(textElement.content, 0, 0, effectiveFontSize);
   
   if (pathData && pathData.trim() !== "") {
     const path = svgDoc.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -1055,6 +1121,20 @@ function calculateAlignmentTransform(targetBox, generatedBox, textElement) {
   const scaleX = targetBox.width / generatedBox.width;
   const scaleY = targetBox.height / generatedBox.height;
   const finalScale = scaleX; // Use X-scale to maintain aspect ratio
+  
+  console.log(`Scale calculation debug:`);
+  console.log(`  Target box: ${targetBox.width}x${targetBox.height}`);
+  console.log(`  Generated box: ${generatedBox.width}x${generatedBox.height}`);
+  console.log(`  Scale X: ${scaleX}, Scale Y: ${scaleY}`);
+  console.log(`  Final scale: ${finalScale}`);
+  
+  // EXPERIMENTAL: For tiny text, check if the scale seems wrong
+  if (textElement.scaleX && textElement.scaleX < 0.5) {
+    console.log(`  TINY TEXT scale analysis:`);
+    console.log(`    Original text scale: ${textElement.scaleX}`);
+    console.log(`    Calculated scale: ${finalScale}`);
+    console.log(`    Expected scale should be close to 1.0 for proper font scaling`);
+  }
   
   // Ensure scale is reasonable (prevent extreme scaling)
   const clampedScale = Math.max(0.1, Math.min(10, finalScale));
