@@ -13,6 +13,11 @@ Font Ozempic takes your SVG files with regular text and converts them to use sin
 - **CNC routing** - Single-pass text cutting
 - **Digital fabrication** - Any tool that needs vector paths, not filled text
 
+## Why make this?
+I was using the wonderful Hershey Text (and Hershey advanced ) plugin within Inkscape a lot, but I always ran into issues where I would try to place text and then either the alignment would be off or the spacing would be wrong. I wanted to try and make a tool that would allow me to import an SVG and make adjustments live. It also calculates the original bounding box and tries to force the hershey text into the same area as the original text.
+
+It is not perfect, but it does work and tries to solve the adjustment universally. Universal adjustment doesn't always work, but it tends to get close enough.
+
 ## 🌟 Key Features
 
 - **14 Single-Line Fonts** - Choose from EMS, Hershey, and Relief font families
@@ -112,9 +117,10 @@ Prepare text for laser engraving with clean single-line fonts.
 ## 🔮 Future Enhancements
 
 - [ ] **Batch Processing** - Convert multiple SVGs at once
+- [ ] **Layer support** - be able to make adjustments and font changes on a per layer or object/group basis in case different elements need different adjustments.
 - [ ] **Custom Font Upload** - Add your own single-line fonts
 - [ ] **Text Effects** - Outline, shadow, and styling options
-- [ ] **Grid Alignment** - Snap-to-grid for precise positioning
+- [ ] **Rotation Support** - add matrix transforms for rotation support
 - [ ] **Font Preview** - Live preview of font styles
 - [ ] **Export Formats** - Support for DXF, G-code, and other formats
 - [ ] **Undo/Redo** - Edit history for complex adjustments
@@ -139,7 +145,7 @@ Prepare text for laser engraving with clean single-line fonts.
 - **[Evil Mad Scientist SVG Fonts](https://gitlab.com/oskay/svg-fonts)** - Extended collection of single-line fonts by Windell Oskay
 
 ### Development
-Built by [Blair Neal](https://github.com/laserpilot) for the creative coding and digital fabrication communities.
+Built by [Blair Neal](https://github.com/laserpilot) using Claude Code
 
 *These fonts are specifically designed for pen plotters, laser cutters, and other digital fabrication tools that benefit from single-line vector paths.*
 
