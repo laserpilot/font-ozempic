@@ -2,6 +2,18 @@ html, body {
   margin: 0;
   padding: 0;
 }
+
+/* Hide the p5.js canvas since we're not using it */
 canvas {
-  display: block;
+  display: none;
+}
+
+/* Move the p5.js main div to bottom and hide it */
+main {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  visibility: hidden;
 }

@@ -14,7 +14,7 @@ let modeSelector;
 
 // Positioning controls
 let xOffsetSlider, yOffsetSlider, fontSizeSlider, letterSpacingSlider, lineSpacingSlider;
-let xOffset = 9, yOffset = 0, fontScale = 1.0; // Scale factor as percentage
+let xOffset = 0, yOffset = 0, fontScale = 1.0; // Scale factor as percentage
 let letterSpacing = 1.0, lineSpacing = 1.0; // Multipliers for spacing
 let strokeWidth = 0.5; // Stroke width for single-line text
 let strokeColor = '#ff0000'; // Stroke color for single-line text (red for preview, black for export)
@@ -23,7 +23,9 @@ let panX = 0, panY = 0; // Pan offset for viewBox
 let isPanning = false; // Track if user is currently panning
 let lastMouseX = 0, lastMouseY = 0; // Last mouse position for pan calculations
 let keepOriginalText = false; // Whether to keep original text visible in export
-let zoomSlider, strokeWidthSlider, strokeColorPicker, keepOriginalTextCheckbox;
+let showGuideBounds = true; // Whether to show debug bounding boxes
+let showOriginalText = true; // Whether to show original text in preview mode
+let zoomSlider, strokeWidthSlider, strokeColorPicker, keepOriginalTextCheckbox, showGuideBoundsCheckbox, showOriginalTextCheckbox;
 
 // Available single-line fonts
 const fontPaths = {
@@ -74,7 +76,7 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(200, 50); // Smaller canvas for minimal UI
+  // No canvas needed - we're using HTML elements only
   
   // Create title header
   let headerDiv = createDiv('');
@@ -259,7 +261,7 @@ function setup() {
   positionSectionLabel.style('font-weight', 'bold');
   
   
-  // Helper function to create labeled slider
+  // Helper function to create labeled slider with text input
   function createLabeledSlider(parent, label, min, max, defaultVal, step, updateFunc) {
     let container = createDiv('');
     container.parent(parent);
@@ -273,8 +275,15 @@ function setup() {
     
     let slider = createSlider(min, max, defaultVal, step);
     slider.parent(container);
-    slider.style('width', '120px');
-    slider.style('margin', '0 8px');
+    slider.style('width', '100px');
+    slider.style('margin', '0 5px');
+    
+    let textInput = createInput(defaultVal.toString());
+    textInput.parent(container);
+    textInput.style('width', '50px');
+    textInput.style('font-size', '12px');
+    textInput.style('text-align', 'center');
+    textInput.style('margin', '0 5px');
     
     let value = createSpan(defaultVal);
     value.parent(container);
@@ -282,8 +291,24 @@ function setup() {
     value.style('font-size', '13px');
     value.style('font-weight', 'bold');
     
+    // Update from slider
     slider.input(() => {
+      const val = slider.value();
+      textInput.value(val);
       updateFunc(slider, value);
+    });
+    
+    // Update from text input (allows going beyond slider range)
+    textInput.input(() => {
+      const val = parseFloat(textInput.value());
+      if (!isNaN(val)) {
+        // Only update slider if value is within range
+        if (val >= min && val <= max) {
+          slider.value(val);
+        }
+        // Always update the display and trigger update function
+        updateFunc({value: () => val}, value);
+      }
     });
     
     return slider;
@@ -384,6 +409,90 @@ function setup() {
   displayLabel.parent(controlsDiv);
   displayLabel.style('margin', '15px 0 10px 0');
   displayLabel.style('font-weight', 'bold');
+  
+  // Show Guide Bounding Boxes checkbox
+  let guideBoundsContainer = createDiv('');
+  guideBoundsContainer.parent(controlsDiv);
+  guideBoundsContainer.style('margin-bottom', '15px');
+  guideBoundsContainer.style('display', 'flex');
+  guideBoundsContainer.style('align-items', 'center');
+  
+  showGuideBoundsCheckbox = createCheckbox('', showGuideBounds);
+  showGuideBoundsCheckbox.parent(guideBoundsContainer);
+  showGuideBoundsCheckbox.changed(() => {
+    showGuideBounds = showGuideBoundsCheckbox.checked();
+    updateDisplay();
+  });
+  showGuideBoundsCheckbox.style('margin-right', '8px');
+  
+  let guideBoundsLabel = createSpan('Show guide bounding boxes');
+  guideBoundsLabel.parent(guideBoundsContainer);
+  guideBoundsLabel.style('font-size', '13px');
+  guideBoundsLabel.style('color', '#333');
+  guideBoundsLabel.style('cursor', 'pointer');
+  
+  // Make label clickable to toggle checkbox
+  guideBoundsLabel.mousePressed(() => {
+    showGuideBounds = !showGuideBounds;
+    showGuideBoundsCheckbox.checked(showGuideBounds);
+    updateDisplay();
+  });
+  
+  let guideBoundsInfo = createP('(Shows red=target, blue=generated, green=final alignment boxes)');
+  guideBoundsInfo.parent(controlsDiv);
+  guideBoundsInfo.style('font-size', '11px');
+  guideBoundsInfo.style('color', '#666');
+  guideBoundsInfo.style('margin', '0 0 10px 0');
+  guideBoundsInfo.style('line-height', '1.3');
+  
+  // Show Original Text checkbox
+  let originalTextContainer = createDiv('');
+  originalTextContainer.parent(controlsDiv);
+  originalTextContainer.style('margin-bottom', '15px');
+  originalTextContainer.style('display', 'flex');
+  originalTextContainer.style('align-items', 'center');
+  
+  showOriginalTextCheckbox = createCheckbox('', showOriginalText);
+  showOriginalTextCheckbox.parent(originalTextContainer);
+  showOriginalTextCheckbox.changed(() => {
+    showOriginalText = showOriginalTextCheckbox.checked();
+    updateDisplay();
+  });
+  showOriginalTextCheckbox.style('margin-right', '8px');
+  
+  let originalTextLabel = createSpan('Show original text in preview');
+  originalTextLabel.parent(originalTextContainer);
+  originalTextLabel.style('font-size', '13px');
+  originalTextLabel.style('color', '#333');
+  originalTextLabel.style('cursor', 'pointer');
+  
+  // Make label clickable to toggle checkbox
+  originalTextLabel.mousePressed(() => {
+    showOriginalText = !showOriginalText;
+    showOriginalTextCheckbox.checked(showOriginalText);
+    updateDisplay();
+  });
+  
+  let originalTextInfo = createP('(Shows original text underneath single-line converted text)');
+  originalTextInfo.parent(controlsDiv);
+  originalTextInfo.style('font-size', '11px');
+  originalTextInfo.style('color', '#666');
+  originalTextInfo.style('margin', '0 0 10px 0');
+  originalTextInfo.style('line-height', '1.3');
+  
+  // Debug info display
+  let debugInfoDiv = createDiv('');
+  debugInfoDiv.parent(controlsDiv);
+  debugInfoDiv.id('debug-info');
+  debugInfoDiv.style('margin', '0 0 15px 0');
+  debugInfoDiv.style('padding', '8px');
+  debugInfoDiv.style('background-color', '#f0f0f0');
+  debugInfoDiv.style('border', '1px solid #ccc');
+  debugInfoDiv.style('border-radius', '4px');
+  debugInfoDiv.style('font-size', '11px');
+  debugInfoDiv.style('line-height', '1.3');
+  debugInfoDiv.style('color', '#333');
+  debugInfoDiv.html('<strong>Debug Info:</strong><br>Text elements: 0<br>Font ready: No<br>Conversion paths: 0');
 
   // Export Options section
   let exportLabel = createP('Export Options:');
@@ -516,8 +625,6 @@ function setup() {
   if (targetSvgData) {
     displayOriginalSvg();
   }
-  
-  noLoop();
 }
 
 function fontChanged() {
@@ -682,6 +789,7 @@ function addPanListeners() {
 // Removed updateAlignmentButtons function - no longer needed with sliders
 
 function updateDisplay() {
+  updateDebugInfo();
   if (previewMode === "original") {
     displayOriginalSvg();
   } else {
@@ -782,10 +890,14 @@ function generateConvertedSvg() {
   const svgDoc = parser.parseFromString(targetSvgData, "image/svg+xml");
   const svgRoot = svgDoc.documentElement;
   
-  // Keep original text visible but make it lighter for alignment reference
+  // Show/hide original text based on user preference
   const textNodes = svgDoc.querySelectorAll("text");
   textNodes.forEach((textNode) => {
-    textNode.setAttribute("style", "fill: #000000; opacity: 0.8;");
+    if (showOriginalText) {
+      textNode.setAttribute("style", "fill: #000000; opacity: 0.8;");
+    } else {
+      textNode.setAttribute("style", "display: none;");
+    }
   });
   
   // Create a new group for converted text paths
@@ -797,10 +909,15 @@ function generateConvertedSvg() {
   
   // Generate paths for each text element using new processTextElement function
   let pathsGenerated = 0;
+  console.log(`Processing ${textElements.length} text elements for conversion:`);
   textElements.forEach((textEl, index) => {
+    console.log(`Element ${index}: "${textEl.content}" fontSize:${textEl.fontSize} scale:${textEl.scaleX} textAnchor:${textEl.textAnchor}`);
     const result = processTextElement(textEl, svgDoc, convertedGroup, true);
     if (result) {
       pathsGenerated++;
+      console.log(`  ✓ Generated path for: "${textEl.content}"`);
+    } else {
+      console.log(`  ✗ Failed to generate path for: "${textEl.content}"`);
     }
   });
   
@@ -848,9 +965,10 @@ function processTextElement(textElement, svgDoc, parentGroup, isPreview = false)
   // Step 2: Get the "true" bounding box of the original text
   // This accounts for transforms and text-anchor properties
   const targetBox = getTransformedBoundingBox(textElement);
+  console.log(`  Target box for "${textElement.content}": x=${targetBox.x.toFixed(2)}, y=${targetBox.y.toFixed(2)}, w=${targetBox.width.toFixed(2)}, h=${targetBox.height.toFixed(2)}`);
   
-  // DEBUG: Add visual debugging rectangles (only in preview mode)
-  if (isPreview) {
+  // DEBUG: Add visual debugging rectangles (only in preview mode when enabled)
+  if (isPreview && showGuideBounds) {
     addDebugRectangle(svgDoc, parentGroup, targetBox, "red", `target-${textElement.content.replace(/\s+/g, '_')}`);
   }
   
@@ -864,16 +982,19 @@ function processTextElement(textElement, svgDoc, parentGroup, isPreview = false)
   
   // Get the bounding box of the generated text
   const generatedBox = getGroupBoundingBox(generatedGroup);
+  console.log(`  Generated box for "${textElement.content}": x=${generatedBox.x.toFixed(2)}, y=${generatedBox.y.toFixed(2)}, w=${generatedBox.width.toFixed(2)}, h=${generatedBox.height.toFixed(2)}`);
   
-  // DEBUG: Add visual debugging rectangles (only in preview mode)
-  if (isPreview) {
+  // DEBUG: Add visual debugging rectangles (only in preview mode when enabled)
+  if (isPreview && showGuideBounds) {
     // The generated box is at origin, so we need to show it there
-    addDebugRectangle(svgDoc, parentGroup, generatedBox, "blue", `generated-${textElement.content.replace(/\s+/g, '_')}`);
+    //addDebugRectangle(svgDoc, parentGroup, generatedBox, "blue", `generated-${textElement.content.replace(/\s+/g, '_')}`);
   }
   
   // Step 4: Align the new text to the original bounding box
   // Calculate scale and translation to map generated text to target position
   const alignTransform = calculateAlignmentTransform(targetBox, generatedBox, textElement);
+  
+  console.log(`  Align transform for "${textElement.content}": scale=${alignTransform.scale.toFixed(4)}, translate=(${alignTransform.translateX.toFixed(2)}, ${alignTransform.translateY.toFixed(2)})`);
   
   // WARN if scale seems extreme (but allow for heavily scaled text)
   if (alignTransform.scale > 5 || alignTransform.scale < 0.05) {
@@ -909,8 +1030,8 @@ function processTextElement(textElement, svgDoc, parentGroup, isPreview = false)
   // Add the final group to the parent
   parentGroup.appendChild(outerGroup);
   
-  // DEBUG: Add final position rectangle (only in preview mode)
-  if (isPreview) {
+  // DEBUG: Add final position rectangle (only in preview mode when enabled)
+  if (isPreview && showGuideBounds) {
     // The final box should account for the complex transform chain
     const finalBox = {
       x: centerX + xOffset - (targetBox.width * fontScale) / 2,
@@ -1038,14 +1159,21 @@ function renderSingleLineTextAtOrigin(textElement, svgDoc) {
   // PURE COORDINATE SYSTEM: Generate paths at origin with ORIGINAL font size
   // This creates large, natural-sized text that will be scaled down by calculateAlignmentTransform
   const originalFontSize = textElement.fontSize || 14; // Now the original, unscaled fontSize
+  console.log(`  Generating path for "${textElement.content}" with fontSize: ${originalFontSize}`);
   const pathData = generateSvgPathForText(textElement.content, 0, 0, originalFontSize);
+  console.log(`  Path data length: ${pathData ? pathData.length : 0}`);
   
   if (pathData && pathData.trim() !== "") {
     const path = svgDoc.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("d", pathData);
     path.setAttribute("fill", "none");
     path.setAttribute("stroke", strokeColor);
-    path.setAttribute("stroke-width", strokeWidth);
+    
+    // Calculate stroke width compensation based on text element's transform scale
+    const transformScale = textElement.transformScaleX || textElement.scaleX || 1;
+    const compensatedStrokeWidth = strokeWidth / transformScale;
+    path.setAttribute("stroke-width", compensatedStrokeWidth);
+    
     group.appendChild(path);
     return group;
   }
@@ -1200,10 +1328,25 @@ function calculateAlignmentTransform(targetBox, generatedBox, textElement) {
 
 // Helper function to calculate line spacing offset for a text element
 function calculateLineSpacingOffset(textElement) {
-  // Find the first text element to use as baseline
-  const baseY = textElements.length > 0 ? textElements[0].y : 0;
+  // Only apply line spacing to tspan elements (multi-line text)
+  if (!textElement.originalNode || !textElement.parentTextNode) {
+    return 0; // Single-line text elements are not affected by line spacing
+  }
   
-  // Calculate relative position from first line
+  // Find all tspan elements that belong to the same parent text node
+  const siblingTspans = textElements.filter(el => 
+    el.parentTextNode === textElement.parentTextNode
+  );
+  
+  // If there's only one tspan, no line spacing adjustment needed
+  if (siblingTspans.length <= 1) {
+    return 0;
+  }
+  
+  // Use the first tspan of this group as the baseline
+  const baseY = siblingTspans[0].y;
+  
+  // Calculate relative position from the first line in this group
   const relativeY = textElement.y - baseY;
   
   // Apply line spacing multiplier to the relative position
@@ -1234,6 +1377,22 @@ function clearWarnings() {
   if (warningDiv) {
     warningDiv.style.display = 'none';
     warningDiv.innerHTML = '';
+  }
+}
+
+// Helper function to update debug info display
+function updateDebugInfo() {
+  const debugDiv = document.getElementById('debug-info');
+  if (debugDiv) {
+    const fontReady = currentFont && currentFont.isReady();
+    const fontGlyphs = fontReady ? Object.keys(currentFont.glyphs).length : 0;
+    debugDiv.innerHTML = `
+      <strong>Debug Info:</strong><br>
+      Text elements: ${textElements.length}<br>
+      Font ready: ${fontReady ? 'Yes' : 'No'}<br>
+      Font glyphs: ${fontGlyphs}<br>
+      Current font: ${fontSelector ? fontSelector.value() : 'None'}
+    `;
   }
 }
 
@@ -1269,6 +1428,20 @@ function getCombinedTransform(element) {
         totalTransform.scaleX *= scaleValues[0] || 1;
         totalTransform.scaleY *= scaleValues[1] || scaleValues[0] || 1;
       }
+      
+      // Parse matrix transform
+      const matrixMatch = transform.match(/matrix\(([^)]+)\)/);
+      if (matrixMatch) {
+        const matrixValues = matrixMatch[1].split(/[,\s]+/).map(parseFloat);
+        // matrix(a, b, c, d, e, f) where a=scaleX, d=scaleY, e=translateX, f=translateY
+        if (matrixValues.length >= 6) {
+          totalTransform.scaleX *= matrixValues[0]; // a (scaleX)
+          totalTransform.scaleY *= matrixValues[3]; // d (scaleY)
+          totalTransform.translateX += matrixValues[4]; // e (translateX)
+          totalTransform.translateY += matrixValues[5]; // f (translateY)
+          console.log(`  Matrix transform: scale(${matrixValues[0]}, ${matrixValues[3]}), translate(${matrixValues[4]}, ${matrixValues[5]})`);
+        }
+      }
     }
     currentElement = currentElement.parentNode;
   }
@@ -1299,7 +1472,7 @@ function getFontSize(element, svgDoc) {
   // Priority 2: Inline style attribute
   const style = element.getAttribute("style") || "";
   if (style.includes("font-size:")) {
-    const match = style.match(/font-size:\s*([0-9.]+)/);
+    const match = style.match(/font-size:\s*([0-9.]+)px?/);
     if (match) {
       fontSize = parseFloat(match[1]);
       return fontSize;
@@ -1325,6 +1498,7 @@ function parseTargetSvg() {
   
   textElements = [];
   const textNodes = svgDoc.querySelectorAll("text");
+  console.log(`Found ${textNodes.length} text nodes in SVG`);
   
   textNodes.forEach((textNode, index) => {
     // Get combined transform from this element and all parent groups
@@ -1348,10 +1522,31 @@ function parseTargetSvg() {
         // PURE COORDINATE SYSTEM: Store original fontSize and transform scales separately
         // const finalFontSize = fontSize * combinedTransform.scaleY; // OLD: Pre-scaling caused double scaling
         
-        // Check for existing text-anchor attribute
-        const textAnchor = textNode.getAttribute("text-anchor") || tspan.getAttribute("text-anchor") || "start";
+        // Check for existing text-anchor attribute (check style first, then attributes)
+        let textAnchor = "start";
+        
+        // Check tspan style first
+        const tspanStyle = tspan.getAttribute("style") || "";
+        if (tspanStyle.includes("text-anchor:")) {
+          const match = tspanStyle.match(/text-anchor:\s*(start|middle|end)/);
+          if (match) {
+            textAnchor = match[1];
+          }
+        }
+        // Check parent text node style
+        else if (textNode.getAttribute("style") && textNode.getAttribute("style").includes("text-anchor:")) {
+          const match = textNode.getAttribute("style").match(/text-anchor:\s*(start|middle|end)/);
+          if (match) {
+            textAnchor = match[1];
+          }
+        }
+        // Check attributes as fallback
+        else {
+          textAnchor = tspan.getAttribute("text-anchor") || textNode.getAttribute("text-anchor") || "start";
+        }
         
         if (textContent && textContent.trim() !== "") {
+          console.log(`Adding tspan: "${textContent.trim()}" at (${finalX}, ${finalY}), fontSize: ${fontSize}, textAnchor: ${textAnchor}`);
           textElements.push({
             content: textContent.trim(),
             x: finalX,
@@ -1384,8 +1579,17 @@ function parseTargetSvg() {
       // PURE COORDINATE SYSTEM: Store original fontSize and transform scales separately
       // const finalFontSize = fontSize * combinedTransform.scaleY; // OLD: Pre-scaling caused double scaling
       
-      // Check for existing text-anchor attribute
-      const textAnchor = textNode.getAttribute("text-anchor") || "start";
+      // Check for existing text-anchor attribute (check style first, then attributes)
+      let textAnchor = "start";
+      const nodeStyle = textNode.getAttribute("style") || "";
+      if (nodeStyle.includes("text-anchor:")) {
+        const match = nodeStyle.match(/text-anchor:\s*(start|middle|end)/);
+        if (match) {
+          textAnchor = match[1];
+        }
+      } else {
+        textAnchor = textNode.getAttribute("text-anchor") || "start";
+      }
       
       if (textContent && textContent.trim() !== "") {
         textElements.push({
@@ -1405,12 +1609,13 @@ function parseTargetSvg() {
     }
   });
   
+  updateDebugInfo();
+  console.log(`Total text elements parsed: ${textElements.length}`);
 }
 
 
 function draw() {
-  // Simple UI canvas - most display is handled by HTML elements
-  background(250);
+  // No canvas drawing needed - all UI is HTML elements
 }
 
 function saveSvgWithFont() {
@@ -1504,6 +1709,7 @@ function generateSvgPathForText(text, x, y, fontSize) {
     return "";
   }
   
+  console.log(`    Generating path for "${text}" with fontSize:${fontSize}, scaleFactor:${fontSize / currentFont.unitsPerEm}`);
   
   let pathData = "";
   let cursorX = x;
@@ -1520,10 +1726,12 @@ function generateSvgPathForText(text, x, y, fontSize) {
       // Apply letter spacing multiplier to character advancement
       cursorX += (glyph.horizAdvX * scaleFactor * letterSpacing);
     } else {
-      console.log(`Missing glyph for '${char}' (${char.charCodeAt(0)})`);
+      console.log(`    Missing glyph for '${char}' (${char.charCodeAt(0)})`);
       cursorX += (300 * scaleFactor * letterSpacing); // Fallback spacing with letter spacing
     }
   }
+  
+  console.log(`    Final path data length: ${pathData.length}`);
   
   return pathData.trim();
 }

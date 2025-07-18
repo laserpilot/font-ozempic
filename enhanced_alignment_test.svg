@@ -1,10 +1,44 @@
-<?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" width="842" height="595" viewBox="0 0 842 595">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="842"
+   height="595"
+   viewBox="0 0 842 595"
+   version="1.1"
+   id="svg67"
+   sodipodi:docname="enhanced_alignment_test.svg"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview67"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.7427751"
+     inkscape:cx="342.2702"
+     inkscape:cy="258.49577"
+     inkscape:window-width="1592"
+     inkscape:window-height="814"
+     inkscape:window-x="0"
+     inkscape:window-y="73"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg67" />
   <!-- Background -->
-  <rect width="842" height="595" fill="white" />
-  
+  <rect
+     width="842"
+     height="595"
+     fill="white"
+     id="rect1" />
   <!-- CSS Styles matching composite structure -->
-  <style>
+  <style
+     id="style1">
     .Song1-label { font-family: Ubuntu, sans-serif; font-size: 14px; fill: black; text-anchor: middle; }
     .Song2-label { font-family: Ubuntu, sans-serif; font-size: 14px; fill: black; text-anchor: middle; }
     .Song3-label { font-family: Ubuntu, sans-serif; font-size: 14px; fill: black; text-anchor: middle; }
@@ -13,217 +47,863 @@
     .Song6-label { font-family: Ubuntu, sans-serif; font-size: 14px; fill: black; text-anchor: end; }
     .time-labels { font-family: Ubuntu, sans-serif; font-size: 12px; fill: #666; }
   </style>
-  
   <!-- Visual Guide Grid -->
-  <defs>
-    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#f0f0f0" stroke-width="1"/>
+  <defs
+     id="defs2">
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#grid"
+       id="pattern70"
+       patternTransform="translate(21.899048,-12.128704)" />
+    <pattern
+       id="grid"
+       width="50"
+       height="50"
+       patternUnits="userSpaceOnUse">
+      <path
+         d="M 50 0 L 0 0 0 50"
+         fill="none"
+         stroke="#f0f0f0"
+         stroke-width="1"
+         id="path1" />
     </pattern>
-    <pattern id="finegrid" width="10" height="10" patternUnits="userSpaceOnUse">
-      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#f8f8f8" stroke-width="0.5"/>
+    <pattern
+       id="finegrid"
+       width="10"
+       height="10"
+       patternUnits="userSpaceOnUse">
+      <path
+         d="M 10 0 L 0 0 0 10"
+         fill="none"
+         stroke="#f8f8f8"
+         stroke-width="0.5"
+         id="path2" />
     </pattern>
   </defs>
-  
   <!-- Background grids -->
-  <rect width="100%" height="100%" fill="url(#finegrid)" opacity="0.3"/>
-  <rect width="100%" height="100%" fill="url(#grid)" opacity="0.3"/>
-  
+  <rect
+     width="100%"
+     height="100%"
+     fill="url(#finegrid)"
+     opacity="0.3"
+     id="rect2" />
+  <rect
+     width="100%"
+     height="100%"
+     fill="url(#grid)"
+     opacity="0.3"
+     id="rect3"
+     style="fill:url(#pattern70)"
+     x="21.899048"
+     y="-12.128704" />
   <!-- Alignment reference lines -->
-  <line x1="180" y1="0" x2="180" y2="595" stroke="#ddd" stroke-width="2" stroke-dasharray="5,5"/>
-  <line x1="421" y1="0" x2="421" y2="595" stroke="#ddd" stroke-width="2" stroke-dasharray="5,5"/>
-  <line x1="662" y1="0" x2="662" y2="595" stroke="#ddd" stroke-width="2" stroke-dasharray="5,5"/>
-  
+  <line
+     x1="180"
+     y1="0"
+     x2="180"
+     y2="595"
+     stroke="#ddd"
+     stroke-width="2"
+     stroke-dasharray="5,5"
+     id="line3" />
+  <line
+     x1="421"
+     y1="0"
+     x2="421"
+     y2="595"
+     stroke="#ddd"
+     stroke-width="2"
+     stroke-dasharray="5,5"
+     id="line4" />
+  <line
+     x1="662"
+     y1="0"
+     x2="662"
+     y2="595"
+     stroke="#ddd"
+     stroke-width="2"
+     stroke-dasharray="5,5"
+     id="line5" />
   <!-- Section dividers -->
-  <line x1="0" y1="150" x2="842" y2="150" stroke="#ccc" stroke-width="1" stroke-dasharray="3,3"/>
-  <line x1="0" y1="300" x2="842" y2="300" stroke="#ccc" stroke-width="1" stroke-dasharray="3,3"/>
-  <line x1="0" y1="450" x2="842" y2="450" stroke="#ccc" stroke-width="1" stroke-dasharray="3,3"/>
-  
+  <line
+     x1="0"
+     y1="150"
+     x2="842"
+     y2="150"
+     stroke="#ccc"
+     stroke-width="1"
+     stroke-dasharray="3,3"
+     id="line6" />
+  <line
+     x1="0"
+     y1="300"
+     x2="842"
+     y2="300"
+     stroke="#ccc"
+     stroke-width="1"
+     stroke-dasharray="3,3"
+     id="line7" />
+  <line
+     x1="0"
+     y1="450"
+     x2="842"
+     y2="450"
+     stroke="#ccc"
+     stroke-width="1"
+     stroke-dasharray="3,3"
+     id="line8" />
   <!-- Bounding box guides -->
-  <rect x="40" y="40" width="120" height="100" fill="none" stroke="#ffcccc" stroke-width="1" stroke-dasharray="2,2"/>
-  <rect x="240" y="40" width="160" height="100" fill="none" stroke="#ffcccc" stroke-width="1" stroke-dasharray="2,2"/>
-  <rect x="440" y="40" width="200" height="100" fill="none" stroke="#ffcccc" stroke-width="1" stroke-dasharray="2,2"/>
-  <rect x="640" y="40" width="160" height="100" fill="none" stroke="#ffcccc" stroke-width="1" stroke-dasharray="2,2"/>
-  
+  <rect
+     x="40"
+     y="40"
+     width="120"
+     height="100"
+     fill="none"
+     stroke="#ffcccc"
+     stroke-width="1"
+     stroke-dasharray="2,2"
+     id="rect8" />
+  <rect
+     x="240"
+     y="40"
+     width="160"
+     height="100"
+     fill="none"
+     stroke="#ffcccc"
+     stroke-width="1"
+     stroke-dasharray="2,2"
+     id="rect9" />
+  <rect
+     x="440"
+     y="40"
+     width="200"
+     height="100"
+     fill="none"
+     stroke="#ffcccc"
+     stroke-width="1"
+     stroke-dasharray="2,2"
+     id="rect10" />
+  <rect
+     x="640"
+     y="40"
+     width="160"
+     height="100"
+     fill="none"
+     stroke="#ffcccc"
+     stroke-width="1"
+     stroke-dasharray="2,2"
+     id="rect11" />
   <!-- SECTION 1: Simple Text (No transforms, no text-anchor) -->
-  <g id="section1-simple">
-    <text x="20" y="25" font-family="Ubuntu, sans-serif" font-size="10" fill="#333">SECTION 1: Simple Text (No transforms, no text-anchor)</text>
-    
-    <g id="master-text-labels-layer">
-      <g id="simple-time-labels" transform="translate(0,0)">
+  <g
+     id="section1-simple">
+    <text
+       x="20"
+       y="25"
+       font-family="Ubuntu, sans-serif"
+       font-size="10"
+       fill="#333"
+       id="text11">SECTION 1: Simple Text (No transforms, no text-anchor)</text>
+    <g
+       id="master-text-labels-layer">
+      <g
+         id="simple-time-labels"
+         transform="translate(0,0)">
         <!-- Short time labels (4 chars) -->
-        <text x="100" y="70" font-family="Ubuntu, sans-serif" font-size="12" fill="black">0:00</text>
-        <text x="300" y="70" font-family="Ubuntu, sans-serif" font-size="12" fill="black">1:23</text>
-        <text x="500" y="70" font-family="Ubuntu, sans-serif" font-size="12" fill="black">2:45</text>
-        <text x="700" y="70" font-family="Ubuntu, sans-serif" font-size="12" fill="black">3:67</text>
-        
+        <text
+           x="100"
+           y="70"
+           font-family="Ubuntu, sans-serif"
+           font-size="12"
+           fill="black"
+           id="text12">0:00</text>
+        <text
+           x="300"
+           y="70"
+           font-family="Ubuntu, sans-serif"
+           font-size="12"
+           fill="black"
+           id="text13">1:23</text>
+        <text
+           x="500"
+           y="70"
+           font-family="Ubuntu, sans-serif"
+           font-size="12"
+           fill="black"
+           id="text14">2:45</text>
+        <text
+           x="700"
+           y="70"
+           font-family="Ubuntu, sans-serif"
+           font-size="12"
+           fill="black"
+           id="text15">3:67</text>
         <!-- Simple song titles (no special attributes) -->
-        <text x="100" y="100" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Short Title</text>
-        <text x="300" y="100" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Medium Length Title</text>
-        <text x="500" y="100" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Very Long Song Title Name</text>
-        <text x="700" y="100" font-family="Ubuntu, sans-serif" font-size="14" fill="black">Extra Long Title</text>
+        <text
+           x="100"
+           y="100"
+           font-family="Ubuntu, sans-serif"
+           font-size="14"
+           fill="black"
+           id="text16">Short Title</text>
+        <text
+           x="300"
+           y="100"
+           font-family="Ubuntu, sans-serif"
+           font-size="14"
+           fill="black"
+           id="text17">Medium Length Title</text>
+        <text
+           x="500"
+           y="100"
+           font-family="Ubuntu, sans-serif"
+           font-size="14"
+           fill="black"
+           id="text18">Very Long Song Title Name</text>
+        <text
+           x="700"
+           y="100"
+           font-family="Ubuntu, sans-serif"
+           font-size="14"
+           fill="black"
+           id="text19">Extra Long Title</text>
       </g>
     </g>
   </g>
-  
   <!-- SECTION 2: Composite-like Structure (Nested transforms + text-anchor) -->
-  <g id="section2-composite">
-    <text x="20" y="175" font-family="Ubuntu, sans-serif" font-size="10" fill="#333">SECTION 2: Composite-like Structure (Nested transforms + text-anchor: middle)</text>
-    
+  <g
+     id="section2-composite">
+    <text
+       x="20"
+       y="175"
+       font-family="Ubuntu, sans-serif"
+       font-size="10"
+       fill="#333"
+       id="text20">SECTION 2: Composite-like Structure (Nested transforms + text-anchor: middle)</text>
     <!-- Bounding boxes for this section -->
-    <rect x="40" y="190" width="120" height="100" fill="none" stroke="#ccffcc" stroke-width="1" stroke-dasharray="2,2"/>
-    <rect x="240" y="190" width="160" height="100" fill="none" stroke="#ccffcc" stroke-width="1" stroke-dasharray="2,2"/>
-    <rect x="440" y="190" width="200" height="100" fill="none" stroke="#ccffcc" stroke-width="1" stroke-dasharray="2,2"/>
-    <rect x="640" y="190" width="160" height="100" fill="none" stroke="#ccffcc" stroke-width="1" stroke-dasharray="2,2"/>
-    
+    <rect
+       x="40"
+       y="190"
+       width="120"
+       height="100"
+       fill="none"
+       stroke="#ccffcc"
+       stroke-width="1"
+       stroke-dasharray="2,2"
+       id="rect20" />
+    <rect
+       x="240"
+       y="190"
+       width="160"
+       height="100"
+       fill="none"
+       stroke="#ccffcc"
+       stroke-width="1"
+       stroke-dasharray="2,2"
+       id="rect21" />
+    <rect
+       x="440"
+       y="190"
+       width="200"
+       height="100"
+       fill="none"
+       stroke="#ccffcc"
+       stroke-width="1"
+       stroke-dasharray="2,2"
+       id="rect22" />
+    <rect
+       x="640"
+       y="190"
+       width="160"
+       height="100"
+       fill="none"
+       stroke="#ccffcc"
+       stroke-width="1"
+       stroke-dasharray="2,2"
+       id="rect23" />
     <!-- Time labels layer (no text-anchor) -->
-    <g id="master-text-labels-layer">
+    <g
+       id="g30">
       <!-- Song 1 time labels -->
-      <g id="Song1-time-labels" transform="translate(50.0,190) scale(0.08)" data-song="01_Song1">
-        <text x="625" y="300" font-family="Ubuntu, sans-serif" font-size="150" fill="#666">0:00</text>
-        <text x="625" y="500" font-family="Ubuntu, sans-serif" font-size="120" fill="#666">1:23</text>
+      <g
+         id="Song1-time-labels"
+         transform="translate(50.0,190) scale(0.08)"
+         data-song="01_Song1">
+        <text
+           x="625"
+           y="300"
+           font-family="Ubuntu, sans-serif"
+           font-size="150"
+           fill="#666"
+           id="text23">0:00</text>
+        <text
+           x="625"
+           y="500"
+           font-family="Ubuntu, sans-serif"
+           font-size="120"
+           fill="#666"
+           id="text24">1:23</text>
       </g>
-      
       <!-- Song 2 time labels -->
-      <g id="Song2-time-labels" transform="translate(250.0,190) scale(0.08)" data-song="02_Song2">
-        <text x="625" y="300" font-family="Ubuntu, sans-serif" font-size="150" fill="#666">2:45</text>
-        <text x="625" y="500" font-family="Ubuntu, sans-serif" font-size="120" fill="#666">3:67</text>
+      <g
+         id="Song2-time-labels"
+         transform="translate(250.0,190) scale(0.08)"
+         data-song="02_Song2">
+        <text
+           x="625"
+           y="300"
+           font-family="Ubuntu, sans-serif"
+           font-size="150"
+           fill="#666"
+           id="text25">2:45</text>
+        <text
+           x="625"
+           y="500"
+           font-family="Ubuntu, sans-serif"
+           font-size="120"
+           fill="#666"
+           id="text26">3:67</text>
       </g>
-      
       <!-- Song 3 time labels -->
-      <g id="Song3-time-labels" transform="translate(450.0,190) scale(0.08)" data-song="03_Song3">
-        <text x="625" y="300" font-family="Ubuntu, sans-serif" font-size="150" fill="#666">4:89</text>
-        <text x="625" y="500" font-family="Ubuntu, sans-serif" font-size="120" fill="#666">5:01</text>
+      <g
+         id="Song3-time-labels"
+         transform="translate(450.0,190) scale(0.08)"
+         data-song="03_Song3">
+        <text
+           x="625"
+           y="300"
+           font-family="Ubuntu, sans-serif"
+           font-size="150"
+           fill="#666"
+           id="text27">4:89</text>
+        <text
+           x="625"
+           y="500"
+           font-family="Ubuntu, sans-serif"
+           font-size="120"
+           fill="#666"
+           id="text28">5:01</text>
       </g>
-      
       <!-- Song 4 time labels -->
-      <g id="Song4-time-labels" transform="translate(650.0,190) scale(0.08)" data-song="04_Song4">
-        <text x="625" y="300" font-family="Ubuntu, sans-serif" font-size="150" fill="#666">6:23</text>
-        <text x="625" y="500" font-family="Ubuntu, sans-serif" font-size="120" fill="#666">7:45</text>
+      <g
+         id="Song4-time-labels"
+         transform="translate(650.0,190) scale(0.08)"
+         data-song="04_Song4">
+        <text
+           x="625"
+           y="300"
+           font-family="Ubuntu, sans-serif"
+           font-size="150"
+           fill="#666"
+           id="text29">6:23</text>
+        <text
+           x="625"
+           y="500"
+           font-family="Ubuntu, sans-serif"
+           font-size="120"
+           fill="#666"
+           id="text30">7:45</text>
       </g>
     </g>
-    
     <!-- Song titles layer (with text-anchor: middle) -->
-    <g id="master-song-title-layer">
+    <g
+       id="master-song-title-layer"
+       transform="translate(31.29597,3.2668423)">
       <!-- Song 1 title -->
-      <g id="Song1-song-title-layer" transform="translate(50.0,190) scale(0.08)" data-song="01_Song1">
-        <text x="625" y="1100" text-anchor="middle" class="Song1-label" font-weight="bold" font-size="250" data-song="01_Song1">01_Short_Song</text>
+      <g
+         id="Song1-song-title-layer"
+         transform="matrix(0.08,0,0,0.08,50,190)"
+         data-song="01_Song1">
+        <text
+           x="625"
+           y="1100"
+           text-anchor="middle"
+           class="Song1-label"
+           font-weight="bold"
+           font-size="250"
+           data-song="01_Song1"
+           id="text31">01_Short_Song</text>
       </g>
-      
-      <!-- Song 2 title -->
-      <g id="Song2-song-title-layer" transform="translate(250.0,190) scale(0.08)" data-song="02_Song2">
-        <text x="625" y="1100" text-anchor="middle" class="Song2-label" font-weight="bold" font-size="250" data-song="02_Song2">02_Medium_Length_Song</text>
+      <!-- Song 2 title - Multi-line example -->
+      <g
+         id="Song2-song-title-layer"
+         transform="matrix(0.04317388,0,0,0.04317388,264.44553,203.93441)"
+         data-song="02_Song2">
+        <text
+           xml:space="preserve"
+           style="font-size:125px;line-height:1.25;font-family:'.Al Bayan PUA';-inkscape-font-specification:'.Al Bayan PUA, Normal';font-variant-ligatures:none;text-align:center;text-anchor:middle;stroke-width:12.5"
+           x="490.38739"
+           y="1338.0347"
+           id="text68"
+           inkscape:label="quickbrown"><tspan
+             sodipodi:role="line"
+             id="tspan67"
+             style="font-size:125px;text-align:center;text-anchor:middle;stroke-width:12.5"
+             x="490.38739"
+             y="1338.0347">The quick brown fox </tspan><tspan
+             sodipodi:role="line"
+             style="font-size:125px;text-align:center;text-anchor:middle;stroke-width:12.5"
+             x="490.38739"
+             y="1510.1177"
+             id="tspan68">jumped over the lazy dog. THE</tspan><tspan
+             sodipodi:role="line"
+             style="font-size:125px;text-align:center;text-anchor:middle;stroke-width:12.5"
+             x="490.38739"
+             y="1682.2006"
+             id="tspan69">QUICK BROWN FOX JUMPED</tspan><tspan
+             sodipodi:role="line"
+             style="font-size:125px;text-align:center;text-anchor:middle;stroke-width:12.5"
+             x="490.38733"
+             y="1854.2836"
+             id="tspan70">OVER THE LAZY DOG. 1234567890;&lt;&gt;.,;'&quot;!@#$%^&amp;*()</tspan></text>
       </g>
-      
       <!-- Song 3 title -->
-      <g id="Song3-song-title-layer" transform="translate(450.0,190) scale(0.08)" data-song="03_Song3">
-        <text x="625" y="1100" text-anchor="middle" class="Song3-label" font-weight="bold" font-size="250" data-song="03_Song3">03_Very_Long_Song_Title_Name</text>
+      <g
+         id="Song3-song-title-layer"
+         transform="matrix(0.08,0,0,0.08,450,190)"
+         data-song="03_Song3">
+        <text
+           x="625"
+           y="1100"
+           text-anchor="middle"
+           class="Song3-label"
+           font-weight="bold"
+           font-size="250"
+           data-song="03_Song3"
+           id="text35">03_Very_Long_Song_Title_Name</text>
       </g>
-      
       <!-- Song 4 title -->
-      <g id="Song4-song-title-layer" transform="translate(650.0,190) scale(0.08)" data-song="04_Song4">
-        <text x="625" y="1100" text-anchor="middle" class="Song4-label" font-weight="bold" font-size="250" data-song="04_Song4">04_Extra_Long_Title</text>
+      <g
+         id="Song4-song-title-layer"
+         transform="matrix(0.08,0,0,0.08,650,190)"
+         data-song="04_Song4">
+        <text
+           x="625"
+           y="1100"
+           text-anchor="middle"
+           class="Song4-label"
+           font-weight="bold"
+           font-size="250"
+           data-song="04_Song4"
+           id="text36">04_Extra_Long_Title</text>
       </g>
     </g>
   </g>
-  
   <!-- SECTION 3: Mixed text-anchor scenarios -->
-  <g id="section3-mixed">
-    <text x="20" y="325" font-family="Ubuntu, sans-serif" font-size="10" fill="#333">SECTION 3: Mixed text-anchor scenarios (start, middle, end)</text>
-    
+  <g
+     id="section3-mixed">
+    <text
+       x="20"
+       y="325"
+       font-family="Ubuntu, sans-serif"
+       font-size="10"
+       fill="#333"
+       id="text37">SECTION 3: Mixed text-anchor scenarios (start, middle, end)</text>
     <!-- Bounding boxes -->
-    <rect x="40" y="340" width="120" height="100" fill="none" stroke="#ccccff" stroke-width="1" stroke-dasharray="2,2"/>
-    <rect x="240" y="340" width="160" height="100" fill="none" stroke="#ccccff" stroke-width="1" stroke-dasharray="2,2"/>
-    <rect x="440" y="340" width="200" height="100" fill="none" stroke="#ccccff" stroke-width="1" stroke-dasharray="2,2"/>
-    <rect x="640" y="340" width="160" height="100" fill="none" stroke="#ccccff" stroke-width="1" stroke-dasharray="2,2"/>
-    
-    <g id="master-text-labels-layer">
+    <rect
+       x="40"
+       y="340"
+       width="120"
+       height="100"
+       fill="none"
+       stroke="#ccccff"
+       stroke-width="1"
+       stroke-dasharray="2,2"
+       id="rect37" />
+    <rect
+       x="240"
+       y="340"
+       width="160"
+       height="100"
+       fill="none"
+       stroke="#ccccff"
+       stroke-width="1"
+       stroke-dasharray="2,2"
+       id="rect38" />
+    <rect
+       x="440"
+       y="340"
+       width="200"
+       height="100"
+       fill="none"
+       stroke="#ccccff"
+       stroke-width="1"
+       stroke-dasharray="2,2"
+       id="rect39" />
+    <rect
+       x="640"
+       y="340"
+       width="160"
+       height="100"
+       fill="none"
+       stroke="#ccccff"
+       stroke-width="1"
+       stroke-dasharray="2,2"
+       id="rect40" />
+    <g
+       id="g48">
       <!-- Song 5 (text-anchor: start) -->
-      <g id="Song5-text-layer" transform="translate(50.0,340) scale(0.1)" data-song="05_Song5">
-        <text x="500" y="400" text-anchor="start" class="Song5-label" font-size="200" data-song="05_Song5">05_Start_Aligned</text>
-        <text x="500" y="700" text-anchor="start" font-family="Ubuntu, sans-serif" font-size="120" fill="#666">Start</text>
+      <g
+         id="Song5-text-layer"
+         transform="translate(50.0,340) scale(0.1)"
+         data-song="05_Song5">
+        <text
+           x="500"
+           y="400"
+           text-anchor="start"
+           class="Song5-label"
+           font-size="200"
+           data-song="05_Song5"
+           id="text40">05_Start_Aligned</text>
+        <text
+           x="500"
+           y="700"
+           text-anchor="start"
+           font-family="Ubuntu, sans-serif"
+           font-size="120"
+           fill="#666"
+           id="text41">Start</text>
       </g>
-      
       <!-- Song 6 (text-anchor: end) -->
-      <g id="Song6-text-layer" transform="translate(250.0,340) scale(0.1)" data-song="06_Song6">
-        <text x="500" y="400" text-anchor="end" class="Song6-label" font-size="200" data-song="06_Song6">06_End_Aligned_Song</text>
-        <text x="500" y="700" text-anchor="end" font-family="Ubuntu, sans-serif" font-size="120" fill="#666">End</text>
+      <g
+         id="Song6-text-layer"
+         transform="translate(250.0,340) scale(0.1)"
+         data-song="06_Song6">
+        <text
+           x="500"
+           y="400"
+           text-anchor="end"
+           class="Song6-label"
+           font-size="200"
+           data-song="06_Song6"
+           id="text42">06_End_Aligned_Song</text>
+        <text
+           x="500"
+           y="700"
+           text-anchor="end"
+           font-family="Ubuntu, sans-serif"
+           font-size="120"
+           fill="#666"
+           id="text43">End</text>
       </g>
-      
       <!-- Mixed lengths with different anchors -->
-      <g id="mixed-anchor-group" transform="translate(450.0,340) scale(0.1)" data-song="mixed">
-        <text x="500" y="300" text-anchor="middle" font-family="Ubuntu, sans-serif" font-size="150" fill="black">Middle: Long Title</text>
-        <text x="500" y="500" text-anchor="start" font-family="Ubuntu, sans-serif" font-size="150" fill="black">Start: Short</text>
-        <text x="500" y="700" text-anchor="end" font-family="Ubuntu, sans-serif" font-size="150" fill="black">End: Medium Length</text>
+      <g
+         id="mixed-anchor-group"
+         transform="translate(450.0,340) scale(0.1)"
+         data-song="mixed">
+        <text
+           x="500"
+           y="300"
+           text-anchor="middle"
+           font-family="Ubuntu, sans-serif"
+           font-size="150"
+           fill="black"
+           id="text44">Middle: Long Title</text>
+        <text
+           x="500"
+           y="500"
+           text-anchor="start"
+           font-family="Ubuntu, sans-serif"
+           font-size="150"
+           fill="black"
+           id="text45">Start: Short</text>
+        <text
+           x="500"
+           y="700"
+           text-anchor="end"
+           font-family="Ubuntu, sans-serif"
+           font-size="150"
+           fill="black"
+           id="text46">End: Medium Length</text>
       </g>
-      
       <!-- Different coordinate scales -->
-      <g id="scale-test-group" transform="translate(650.0,340) scale(0.15)" data-song="scale">
-        <text x="400" y="300" text-anchor="middle" font-family="Ubuntu, sans-serif" font-size="100" fill="black">Scale 0.15</text>
-        <text x="400" y="500" text-anchor="middle" font-family="Ubuntu, sans-serif" font-size="120" fill="black">Bigger Scale</text>
+      <g
+         id="scale-test-group"
+         transform="translate(650.0,340) scale(0.15)"
+         data-song="scale">
+        <text
+           x="400"
+           y="300"
+           text-anchor="middle"
+           font-family="Ubuntu, sans-serif"
+           font-size="100"
+           fill="black"
+           id="text47">Scale 0.15</text>
+        <text
+           x="400"
+           y="500"
+           text-anchor="middle"
+           font-family="Ubuntu, sans-serif"
+           font-size="120"
+           fill="black"
+           id="text48">Bigger Scale</text>
       </g>
     </g>
   </g>
-  
   <!-- SECTION 4: Complex nested transforms -->
-  <g id="section4-complex">
-    <text x="20" y="475" font-family="Ubuntu, sans-serif" font-size="10" fill="#333">SECTION 4: Complex nested transforms (multiple levels)</text>
-    
+  <g
+     id="section4-complex">
+    <text
+       x="20"
+       y="475"
+       font-family="Ubuntu, sans-serif"
+       font-size="10"
+       fill="#333"
+       id="text49">SECTION 4: Complex nested transforms (multiple levels)</text>
     <!-- Bounding boxes -->
-    <rect x="40" y="490" width="160" height="100" fill="none" stroke="#ffffcc" stroke-width="1" stroke-dasharray="2,2"/>
-    <rect x="240" y="490" width="200" height="100" fill="none" stroke="#ffffcc" stroke-width="1" stroke-dasharray="2,2"/>
-    <rect x="480" y="490" width="160" height="100" fill="none" stroke="#ffffcc" stroke-width="1" stroke-dasharray="2,2"/>
-    <rect x="680" y="490" width="120" height="100" fill="none" stroke="#ffffcc" stroke-width="1" stroke-dasharray="2,2"/>
-    
-    <g id="master-text-labels-layer">
+    <rect
+       x="40"
+       y="490"
+       width="160"
+       height="100"
+       fill="none"
+       stroke="#ffffcc"
+       stroke-width="1"
+       stroke-dasharray="2,2"
+       id="rect49" />
+    <rect
+       x="240"
+       y="490"
+       width="200"
+       height="100"
+       fill="none"
+       stroke="#ffffcc"
+       stroke-width="1"
+       stroke-dasharray="2,2"
+       id="rect50" />
+    <rect
+       x="480"
+       y="490"
+       width="160"
+       height="100"
+       fill="none"
+       stroke="#ffffcc"
+       stroke-width="1"
+       stroke-dasharray="2,2"
+       id="rect51" />
+    <rect
+       x="680"
+       y="490"
+       width="120"
+       height="100"
+       fill="none"
+       stroke="#ffffcc"
+       stroke-width="1"
+       stroke-dasharray="2,2"
+       id="rect52" />
+    <g
+       id="g59">
       <!-- Triple nested transform -->
-      <g id="outer-group" transform="translate(50.0,490)">
-        <g id="middle-group" transform="scale(0.12) translate(100, 0)">
-          <g id="inner-group" transform="rotate(2) translate(0, 50)">
-            <text x="400" y="300" text-anchor="middle" font-family="Ubuntu, sans-serif" font-size="150" fill="black">Triple Nested</text>
-            <text x="400" y="500" font-family="Ubuntu, sans-serif" font-size="120" fill="#666">Complex</text>
+      <g
+         id="outer-group"
+         transform="translate(50.0,490)">
+        <g
+           id="middle-group"
+           transform="scale(0.12) translate(100, 0)">
+          <g
+             id="inner-group"
+             transform="rotate(2) translate(0, 50)">
+            <text
+               x="400"
+               y="300"
+               text-anchor="middle"
+               font-family="Ubuntu, sans-serif"
+               font-size="150"
+               fill="black"
+               id="text52">Triple Nested</text>
+            <text
+               x="400"
+               y="500"
+               font-family="Ubuntu, sans-serif"
+               font-size="120"
+               fill="#666"
+               id="text53">Complex</text>
           </g>
         </g>
       </g>
-      
       <!-- Transform with skew -->
-      <g id="skew-group" transform="translate(250.0,490) scale(0.08) skewX(5)">
-        <text x="500" y="400" text-anchor="middle" font-family="Ubuntu, sans-serif" font-size="180" fill="black">Skewed Transform</text>
-        <text x="500" y="700" text-anchor="middle" font-family="Ubuntu, sans-serif" font-size="120" fill="#666">With Skew</text>
+      <g
+         id="skew-group"
+         transform="translate(250.0,490) scale(0.08) skewX(5)">
+        <text
+           x="500"
+           y="400"
+           text-anchor="middle"
+           font-family="Ubuntu, sans-serif"
+           font-size="180"
+           fill="black"
+           id="text54">Skewed Transform</text>
+        <text
+           x="500"
+           y="700"
+           text-anchor="middle"
+           font-family="Ubuntu, sans-serif"
+           font-size="120"
+           fill="#666"
+           id="text55">With Skew</text>
       </g>
-      
       <!-- Different scale factors -->
-      <g id="tiny-scale-group" transform="translate(490.0,490) scale(0.05)" data-song="tiny">
-        <text x="800" y="600" text-anchor="middle" font-family="Ubuntu, sans-serif" font-size="300" fill="black">Tiny Scale 0.05</text>
-        <text x="800" y="1000" text-anchor="middle" font-family="Ubuntu, sans-serif" font-size="200" fill="#666">Very Small</text>
+      <g
+         id="tiny-scale-group"
+         transform="translate(490.0,490) scale(0.05)"
+         data-song="tiny">
+        <text
+           x="800"
+           y="600"
+           text-anchor="middle"
+           font-family="Ubuntu, sans-serif"
+           font-size="300"
+           fill="black"
+           id="text56">Tiny Scale 0.05</text>
+        <text
+           x="800"
+           y="1000"
+           text-anchor="middle"
+           font-family="Ubuntu, sans-serif"
+           font-size="200"
+           fill="#666"
+           id="text57">Very Small</text>
       </g>
-      
       <!-- Large scale -->
-      <g id="large-scale-group" transform="translate(690.0,490) scale(0.2)" data-song="large">
-        <text x="250" y="200" text-anchor="middle" font-family="Ubuntu, sans-serif" font-size="60" fill="black">Large 0.2</text>
-        <text x="250" y="350" text-anchor="middle" font-family="Ubuntu, sans-serif" font-size="40" fill="#666">Big</text>
+      <g
+         id="large-scale-group"
+         transform="translate(690.0,490) scale(0.2)"
+         data-song="large">
+        <text
+           x="250"
+           y="200"
+           text-anchor="middle"
+           font-family="Ubuntu, sans-serif"
+           font-size="60"
+           fill="black"
+           id="text58">Large 0.2</text>
+        <text
+           x="250"
+           y="350"
+           text-anchor="middle"
+           font-family="Ubuntu, sans-serif"
+           font-size="40"
+           fill="#666"
+           id="text59">Big</text>
       </g>
     </g>
   </g>
-  
   <!-- Reference labels and instructions -->
-  <g id="reference-labels">
-    <text x="750" y="15" font-family="Ubuntu, sans-serif" font-size="8" fill="#999">Enhanced Alignment Test</text>
-    <text x="750" y="25" font-family="Ubuntu, sans-serif" font-size="8" fill="#999">Tests transform awareness</text>
-    
+  <g
+     id="reference-labels">
+    <text
+       x="750"
+       y="15"
+       font-family="Ubuntu, sans-serif"
+       font-size="8"
+       fill="#999"
+       id="text60">Enhanced Alignment Test</text>
+    <text
+       x="750"
+       y="25"
+       font-family="Ubuntu, sans-serif"
+       font-size="8"
+       fill="#999"
+       id="text61">Tests transform awareness</text>
     <!-- Legend -->
-    <g id="legend" transform="translate(750, 50)">
-      <rect x="0" y="0" width="80" height="100" fill="none" stroke="#ddd" stroke-width="1"/>
-      <text x="5" y="15" font-family="Ubuntu, sans-serif" font-size="8" fill="#333">Legend:</text>
-      <rect x="5" y="20" width="10" height="5" fill="none" stroke="#ffcccc" stroke-dasharray="2,2"/>
-      <text x="20" y="27" font-family="Ubuntu, sans-serif" font-size="7" fill="#666">Simple</text>
-      <rect x="5" y="30" width="10" height="5" fill="none" stroke="#ccffcc" stroke-dasharray="2,2"/>
-      <text x="20" y="37" font-family="Ubuntu, sans-serif" font-size="7" fill="#666">Composite</text>
-      <rect x="5" y="40" width="10" height="5" fill="none" stroke="#ccccff" stroke-dasharray="2,2"/>
-      <text x="20" y="47" font-family="Ubuntu, sans-serif" font-size="7" fill="#666">Mixed</text>
-      <rect x="5" y="50" width="10" height="5" fill="none" stroke="#ffffcc" stroke-dasharray="2,2"/>
-      <text x="20" y="57" font-family="Ubuntu, sans-serif" font-size="7" fill="#666">Complex</text>
-      <line x1="5" y1="65" x2="15" y2="65" stroke="#ddd" stroke-width="2" stroke-dasharray="5,5"/>
-      <text x="20" y="68" font-family="Ubuntu, sans-serif" font-size="7" fill="#666">Align ref</text>
+    <g
+       id="legend"
+       transform="translate(750, 50)">
+      <rect
+         x="0"
+         y="0"
+         width="80"
+         height="100"
+         fill="none"
+         stroke="#ddd"
+         stroke-width="1"
+         id="rect61" />
+      <text
+         x="5"
+         y="15"
+         font-family="Ubuntu, sans-serif"
+         font-size="8"
+         fill="#333"
+         id="text62">Legend:</text>
+      <rect
+         x="5"
+         y="20"
+         width="10"
+         height="5"
+         fill="none"
+         stroke="#ffcccc"
+         stroke-dasharray="2,2"
+         id="rect62" />
+      <text
+         x="20"
+         y="27"
+         font-family="Ubuntu, sans-serif"
+         font-size="7"
+         fill="#666"
+         id="text63">Simple</text>
+      <rect
+         x="5"
+         y="30"
+         width="10"
+         height="5"
+         fill="none"
+         stroke="#ccffcc"
+         stroke-dasharray="2,2"
+         id="rect63" />
+      <text
+         x="20"
+         y="37"
+         font-family="Ubuntu, sans-serif"
+         font-size="7"
+         fill="#666"
+         id="text64">Composite</text>
+      <rect
+         x="5"
+         y="40"
+         width="10"
+         height="5"
+         fill="none"
+         stroke="#ccccff"
+         stroke-dasharray="2,2"
+         id="rect64" />
+      <text
+         x="20"
+         y="47"
+         font-family="Ubuntu, sans-serif"
+         font-size="7"
+         fill="#666"
+         id="text65">Mixed</text>
+      <rect
+         x="5"
+         y="50"
+         width="10"
+         height="5"
+         fill="none"
+         stroke="#ffffcc"
+         stroke-dasharray="2,2"
+         id="rect65" />
+      <text
+         x="20"
+         y="57"
+         font-family="Ubuntu, sans-serif"
+         font-size="7"
+         fill="#666"
+         id="text66">Complex</text>
+      <line
+         x1="5"
+         y1="65"
+         x2="15"
+         y2="65"
+         stroke="#ddd"
+         stroke-width="2"
+         stroke-dasharray="5,5"
+         id="line66" />
+      <text
+         x="20"
+         y="68"
+         font-family="Ubuntu, sans-serif"
+         font-size="7"
+         fill="#666"
+         id="text67">Align ref</text>
     </g>
   </g>
 </svg>
