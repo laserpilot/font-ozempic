@@ -46,7 +46,7 @@ const fontPaths = {
 };
 
 function preload() {
-  loadStrings("enhanced_alignment_test.svg", (strings) => {
+  loadStrings("test-svg/enhanced_alignment_test.svg", (strings) => {
     targetSvgData = strings.join("\n");
     console.log(`Loaded SVG data: ${targetSvgData.length} characters`);
     parseTargetSvg();
@@ -95,12 +95,20 @@ function setup() {
   titleH1.style('font-family', 'Ubuntu, sans-serif');
   titleH1.style('font-weight', 'bold');
   
-  let subtitle = createElement('p', 'Plot Singles In Your Area - This tool converts regular SVG text (like Arial, Times New Roman) into single-line vector fonts that are ideal for pen plotters, laser cutters, and other drawing machines.');
+  let subtitle = createElement('p', 'Plot Singles In Your Area');
   subtitle.parent(headerDiv);
   subtitle.style('margin', '5px 0 0 0');
-  subtitle.style('font-size', '14px');
-  subtitle.style('color', '#666');
+  subtitle.style('font-size', '16px');
+  subtitle.style('color', '#555');
   subtitle.style('font-family', 'Ubuntu, sans-serif');
+  subtitle.style('font-weight', 'bold');
+  
+  let description = createElement('p', 'This tool converts regular SVG text objects into single-line vector fonts that are ideal for pen plotters, laser cutters, and other drawing machines.');
+  description.parent(headerDiv);
+  description.style('margin', '5px 0 0 0');
+  description.style('font-size', '14px');
+  description.style('color', '#666');
+  description.style('font-family', 'Ubuntu, sans-serif');
   
   // How To button
   let howToBtn = createButton('How To Use This Tool');
@@ -1155,7 +1163,7 @@ function warmupFontMetrics() {
     const glyph = currentFont.glyphs[char];
     if (glyph) {
       // Just access the metrics to ensure they're cached
-      const width = glyph.horizAdvX;
+      glyph.horizAdvX; // Access to cache metrics
     }
   }
   
@@ -1303,7 +1311,9 @@ function calculateAlignmentTransform(targetBox, generatedBox, textElement) {
   // Calculate scale based on target box dimensions
   // Use X-scale for both dimensions to maintain aspect ratio
   const scaleX = targetBox.width / generatedBox.width;
+  // Calculate scaleY for aspect ratio reference (using scaleX for consistency)
   const scaleY = targetBox.height / generatedBox.height;
+  console.log(`Scale factors: X=${scaleX.toFixed(3)}, Y=${scaleY.toFixed(3)}`);
   const finalScale = scaleX; // Use X-scale to maintain aspect ratio
   
   // PURE COORDINATE SYSTEM: The scale should now match the transform scale
@@ -1516,14 +1526,14 @@ function parseTargetSvg() {
   const textNodes = svgDoc.querySelectorAll("text");
   console.log(`Found ${textNodes.length} text nodes in SVG`);
   
-  textNodes.forEach((textNode, index) => {
+  textNodes.forEach((textNode) => {
     // Get combined transform from this element and all parent groups
     const combinedTransform = getCombinedTransform(textNode);
     
     // Get text content from tspan elements if they exist
     const tspans = textNode.querySelectorAll("tspan");
     if (tspans.length > 0) {
-      tspans.forEach((tspan, tspanIndex) => {
+      tspans.forEach((tspan) => {
         const textContent = tspan.textContent || tspan.innerHTML;
         let x = parseFloat(tspan.getAttribute("x") || textNode.getAttribute("x") || 100);
         let y = parseFloat(tspan.getAttribute("y") || textNode.getAttribute("y") || 100);
@@ -1836,8 +1846,7 @@ function transformGlyphPath(pathData, x, y, sca, unitsPerEm) {
         break;
         
       case "C": // Cubic Bézier curve (absolute)
-        const x1 = currentX;
-        const y1 = currentY;
+        // Starting point (x1, y1) is current position - implicit in SVG path
         const x2 = x + sca * (args[0] / unitsPerEm);
         const y2 = y - sca * (args[1] / unitsPerEm);
         const x3 = x + sca * (args[2] / unitsPerEm);
@@ -1852,8 +1861,7 @@ function transformGlyphPath(pathData, x, y, sca, unitsPerEm) {
         break;
         
       case "c": // Cubic Bézier curve (relative)
-        const relX1 = currentX;
-        const relY1 = currentY;
+        // Starting point (relX1, relY1) is current position - implicit in SVG path
         const relX2 = currentX + sca * (args[0] / unitsPerEm);
         const relY2 = currentY - sca * (args[1] / unitsPerEm);
         const relX3 = currentX + sca * (args[2] / unitsPerEm);
