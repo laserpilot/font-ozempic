@@ -1096,8 +1096,11 @@ function getTransformedBoundingBox(textElement) {
   // This ensures the bounding box matches where the browser actually renders the text
   let textWidth;
   
-  // Use browser's actual text measurement capabilities
-  textWidth = measureActualTextWidth(textElement.content, originalFontSize, textElement.fontFamily || 'sans-serif');
+  // Use browser's actual text measurement capabilities with all font properties
+  const fontWeight = textElement.fontWeight || 'normal';
+  const fontStyle = textElement.fontStyle || 'normal';
+  const letterSpacing = textElement.letterSpacing || 'normal';
+  textWidth = measureActualTextWidth(textElement.content, originalFontSize, textElement.fontFamily || 'sans-serif', fontWeight, fontStyle, letterSpacing);
   
   // Apply transform scaling to get final visual size
   textWidth = textWidth * transformScaleX;
@@ -1152,13 +1155,31 @@ function estimateTextWidth(text, fontSize) {
 // Helper function to estimate text width using ORIGINAL font metrics (for text-anchor positioning)
 // This matches how the browser calculates text width for the original font
 // Use browser's actual text measurement for accurate width calculation
-function measureActualTextWidth(text, fontSize, fontFamily) {
+function measureActualTextWidth(text, fontSize, fontFamily, fontWeight = 'normal', fontStyle = 'normal', letterSpacing = 'normal') {
   // Create a temporary canvas to measure actual text width
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   
-  // Set the font to match the original text exactly
-  ctx.font = `${fontSize}px ${fontFamily}`;
+  // Set the font to match the original text exactly including weight and style
+  ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
+  
+  // Apply letter spacing if specified
+  if (letterSpacing !== 'normal' && letterSpacing !== '0' && letterSpacing !== '0px') {
+    // Convert letter spacing to pixels if needed
+    let spacingValue = 0;
+    if (letterSpacing.includes('px')) {
+      spacingValue = parseFloat(letterSpacing);
+    } else if (letterSpacing.includes('em')) {
+      spacingValue = parseFloat(letterSpacing) * fontSize;
+    } else if (!isNaN(parseFloat(letterSpacing))) {
+      spacingValue = parseFloat(letterSpacing);
+    }
+    
+    // Calculate width with letter spacing
+    const baseWidth = ctx.measureText(text).width;
+    const letterSpacingWidth = spacingValue * (text.length - 1);
+    return baseWidth + letterSpacingWidth;
+  }
   
   // Measure the actual text width using the browser's text measurement
   const metrics = ctx.measureText(text);
@@ -1609,6 +1630,123 @@ function getFontFamily(element, svgDoc) {
   return fontFamily;
 }
 
+function getFontWeight(element, svgDoc) {
+  let fontWeight = 'normal'; // default
+  
+  // Priority 1: CSS styles (highest priority)
+  const className = element.getAttribute("class");
+  if (className && svgDoc) {
+    const styleElement = svgDoc.querySelector("style");
+    if (styleElement) {
+      const cssContent = styleElement.textContent || "";
+      // Look for CSS rule matching the class
+      const classRegex = new RegExp(`\\.${className}\\s*\\{[^}]*font-weight:\\s*([^;}]+)[;}]`, 'i');
+      const match = cssContent.match(classRegex);
+      if (match) {
+        fontWeight = match[1].trim();
+        return fontWeight;
+      }
+    }
+  }
+  
+  // Priority 2: Inline style attribute
+  const style = element.getAttribute("style");
+  if (style) {
+    const styleMatch = style.match(/font-weight:\s*([^;]+)/i);
+    if (styleMatch) {
+      fontWeight = styleMatch[1].trim();
+      return fontWeight;
+    }
+  }
+  
+  // Priority 3: font-weight attribute
+  const fontWeightAttr = element.getAttribute("font-weight");
+  if (fontWeightAttr) {
+    fontWeight = fontWeightAttr;
+    return fontWeight;
+  }
+  
+  return fontWeight;
+}
+
+function getFontStyle(element, svgDoc) {
+  let fontStyle = 'normal'; // default
+  
+  // Priority 1: CSS styles (highest priority)
+  const className = element.getAttribute("class");
+  if (className && svgDoc) {
+    const styleElement = svgDoc.querySelector("style");
+    if (styleElement) {
+      const cssContent = styleElement.textContent || "";
+      // Look for CSS rule matching the class
+      const classRegex = new RegExp(`\\.${className}\\s*\\{[^}]*font-style:\\s*([^;}]+)[;}]`, 'i');
+      const match = cssContent.match(classRegex);
+      if (match) {
+        fontStyle = match[1].trim();
+        return fontStyle;
+      }
+    }
+  }
+  
+  // Priority 2: Inline style attribute
+  const style = element.getAttribute("style");
+  if (style) {
+    const styleMatch = style.match(/font-style:\s*([^;]+)/i);
+    if (styleMatch) {
+      fontStyle = styleMatch[1].trim();
+      return fontStyle;
+    }
+  }
+  
+  // Priority 3: font-style attribute
+  const fontStyleAttr = element.getAttribute("font-style");
+  if (fontStyleAttr) {
+    fontStyle = fontStyleAttr;
+    return fontStyle;
+  }
+  
+  return fontStyle;
+}
+
+function getLetterSpacing(element, svgDoc) {
+  let letterSpacing = 'normal'; // default
+  
+  // Priority 1: CSS styles (highest priority)
+  const className = element.getAttribute("class");
+  if (className && svgDoc) {
+    const styleElement = svgDoc.querySelector("style");
+    if (styleElement) {
+      const cssContent = styleElement.textContent || "";
+      // Look for CSS rule matching the class
+      const classRegex = new RegExp(`\\.${className}\\s*\\{[^}]*letter-spacing:\\s*([^;}]+)[;}]`, 'i');
+      const match = cssContent.match(classRegex);
+      if (match) {
+        letterSpacing = match[1].trim();
+        return letterSpacing;
+      }
+    }
+  }
+  
+  // Priority 2: Inline style attribute
+  const style = element.getAttribute("style");
+  if (style) {
+    const styleMatch = style.match(/letter-spacing:\s*([^;]+)/i);
+    if (styleMatch) {
+      letterSpacing = styleMatch[1].trim();
+      return letterSpacing;
+    }
+  }
+  
+  // Priority 3: letter-spacing attribute
+  const letterSpacingAttr = element.getAttribute("letter-spacing");
+  if (letterSpacingAttr) {
+    letterSpacing = letterSpacingAttr;
+    return letterSpacing;
+  }
+  
+  return letterSpacing;
+}
+
 function getFontSize(element, svgDoc) {
   let fontSize = 14; // default
   
@@ -1686,13 +1824,19 @@ function parseTargetSvg() {
         
         if (textContent && textContent.trim() !== "") {
           const fontFamily = getFontFamily(tspan, svgDoc) || getFontFamily(textNode, svgDoc);
-          console.log(`Adding tspan: "${textContent.trim()}" at (${finalX}, ${finalY}), fontSize: ${fontSize}, fontFamily: ${fontFamily}, textAnchor: ${textAnchor}`);
+          const fontWeight = getFontWeight(tspan, svgDoc) || getFontWeight(textNode, svgDoc);
+          const fontStyle = getFontStyle(tspan, svgDoc) || getFontStyle(textNode, svgDoc);
+          const letterSpacing = getLetterSpacing(tspan, svgDoc) || getLetterSpacing(textNode, svgDoc);
+          console.log(`Adding tspan: "${textContent.trim()}" at (${finalX}, ${finalY}), fontSize: ${fontSize}, fontFamily: ${fontFamily}, fontWeight: ${fontWeight}, fontStyle: ${fontStyle}, letterSpacing: ${letterSpacing}, textAnchor: ${textAnchor}`);
           textElements.push({
             content: textContent.trim(),
             x: finalX,
             y: finalY,
             fontSize: fontSize, // Store original, unscaled fontSize
             fontFamily: fontFamily, // Store font family from CSS/attributes
+            fontWeight: fontWeight, // Store font weight from CSS/attributes
+            fontStyle: fontStyle, // Store font style from CSS/attributes
+            letterSpacing: letterSpacing, // Store letter spacing from CSS/attributes
             transformScaleX: combinedTransform.scaleX, // Store transform scales separately
             transformScaleY: combinedTransform.scaleY,
             className: className,
@@ -1725,13 +1869,19 @@ function parseTargetSvg() {
       
       if (textContent && textContent.trim() !== "") {
         const fontFamily = getFontFamily(textNode, svgDoc);
-        console.log(`Adding text: "${textContent.trim()}" at (${finalX}, ${finalY}), fontSize: ${fontSize}, fontFamily: ${fontFamily}, textAnchor: ${textAnchor}`);
+        const fontWeight = getFontWeight(textNode, svgDoc);
+        const fontStyle = getFontStyle(textNode, svgDoc);
+        const letterSpacing = getLetterSpacing(textNode, svgDoc);
+        console.log(`Adding text: "${textContent.trim()}" at (${finalX}, ${finalY}), fontSize: ${fontSize}, fontFamily: ${fontFamily}, fontWeight: ${fontWeight}, fontStyle: ${fontStyle}, letterSpacing: ${letterSpacing}, textAnchor: ${textAnchor}`);
         textElements.push({
           content: textContent.trim(),
           x: finalX,
           y: finalY,
           fontSize: fontSize, // Store original, unscaled fontSize
           fontFamily: fontFamily, // Store font family from CSS/attributes
+          fontWeight: fontWeight, // Store font weight from CSS/attributes
+          fontStyle: fontStyle, // Store font style from CSS/attributes
+          letterSpacing: letterSpacing, // Store letter spacing from CSS/attributes
           transformScaleX: combinedTransform.scaleX, // Store transform scales separately
           transformScaleY: combinedTransform.scaleY,
           className: className,

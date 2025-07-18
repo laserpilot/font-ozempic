@@ -32,6 +32,77 @@ It is not perfect, but it does work and tries to solve the adjustment universall
 
 **[Launch Font Ozempic](https://laserpilot.github.io/font-ozempic/)** ← Live web tool
 
+## 💻 Run Locally
+
+To run Font Ozempic locally on your machine:
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/laserpilot/font-ozempic.git
+   cd font-ozempic
+   ```
+
+2. **Start a local web server:**
+   ```bash
+   python -m http.server 8000
+   ```
+   *Or for Python 2:*
+   ```bash
+   python -m SimpleHTTPServer 8000
+   ```
+
+3. **Open in your browser:**
+   ```
+   http://localhost:8000
+   ```
+
+**Note:** A local server is required because the tool loads SVG font files via JavaScript, which browsers block when opening HTML files directly due to CORS security policies.
+
+## ➕ Adding Custom Single-Line Fonts
+
+Want to add your own single-line fonts to the dropdown? Here's how:
+
+### 1. **Prepare Your Font File**
+- Ensure your font is in **SVG format** with single-line vector paths
+- Font should follow the same structure as existing fonts in `single_line_svg_fonts/`
+- Test that the font works with single-line plotters
+
+### 2. **Add Font File**
+- Place your font file in the appropriate directory:
+  ```
+  single_line_svg_fonts/
+  ├── EMS/           # EMS fonts go here
+  ├── Hershey/       # Hershey fonts go here
+  ├── Relief/        # Relief fonts go here
+  └── Custom/        # Create this folder for your fonts
+  ```
+
+### 3. **Update Font List**
+- Open `sketch.js` and find the `fontPaths` object (around line 31)
+- Add your font entry:
+  ```javascript
+  const fontPaths = {
+    // ... existing fonts ...
+    "Your Font Name": "single_line_svg_fonts/Custom/YourFont.svg",
+  };
+  ```
+
+### 4. **Test Your Font**
+- Restart your local server
+- Your font should appear in the dropdown menu
+- Test with sample text to ensure proper rendering
+
+### **Font Requirements:**
+- **Single-line vectors only** (no filled shapes)
+- **SVG format** with `<path>` elements for each character
+- **Proper glyph mapping** with character codes
+- **Consistent baseline** alignment
+
+### **Where to Find Single-Line Fonts:**
+- [Evil Mad Scientist SVG Fonts](https://gitlab.com/oskay/svg-fonts)
+- [Hershey Font Collection](https://github.com/kamalmostafa/hershey-fonts)
+- [Single Line Font Resources](https://github.com/golanlevin/p5-single-line-font-resources)
+
 ## 📖 How To Use
 
 1. **Load Your SVG** - Click "Choose File" and select an SVG containing text
@@ -39,6 +110,8 @@ It is not perfect, but it does work and tries to solve the adjustment universall
 3. **Adjust Settings** - Fine-tune positioning, spacing, and scale as needed
 4. **Preview** - Toggle between original and converted views
 5. **Export** - Save your converted SVG ready for plotting
+
+**Need Help?** Check out the [GitHub repository](https://github.com/laserpilot/font-ozempic) for detailed documentation, examples, and troubleshooting.
 
 ### Default Settings
 - Font Scale: 100%
