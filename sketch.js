@@ -87,7 +87,7 @@ function setup() {
   headerDiv.style('border-bottom', '1px solid #dee2e6');
   headerDiv.style('margin-bottom', '20px');
   
-  let titleH1 = createElement('h1', 'SVG Font Converter Tool');
+  let titleH1 = createElement('h1', 'Font Ozempic');
   titleH1.parent(headerDiv);
   titleH1.style('margin', '0');
   titleH1.style('font-size', '24px');
@@ -95,7 +95,7 @@ function setup() {
   titleH1.style('font-family', 'Ubuntu, sans-serif');
   titleH1.style('font-weight', 'bold');
   
-  let subtitle = createElement('p', 'Convert SVG text to single-line vector fonts for plotting');
+  let subtitle = createElement('p', 'Plot Singles In Your Area - This tool converts regular SVG text (like Arial, Times New Roman) into single-line vector fonts that are ideal for pen plotters, laser cutters, and other drawing machines.');
   subtitle.parent(headerDiv);
   subtitle.style('margin', '5px 0 0 0');
   subtitle.style('font-size', '14px');
@@ -129,8 +129,8 @@ function setup() {
   howToContent.style('line-height', '1.5');
   
   howToContent.html(`
-    <h3 style="margin: 0 0 10px 0; color: #333;">What This Tool Does</h3>
-    <p>This tool converts regular SVG text (like Arial, Times New Roman) into single-line vector fonts that are ideal for pen plotters, laser cutters, and other drawing machines.</p>
+    <h3 style="margin: 0 0 10px 0; color: #333;">What Font Ozempic Does</h3>
+    <p>Font Ozempic helps your chunky fonts lose weight! It converts regular SVG text (like Arial, Times New Roman) into single-line vector fonts that are ideal for pen plotters, laser cutters, and other drawing machines.</p>
     
     <h3 style="margin: 15px 0 10px 0; color: #333;">How To Use</h3>
     <ol>
@@ -153,6 +153,28 @@ function setup() {
     
     <h3 style="margin: 15px 0 10px 0; color: #333;">Export Options</h3>
     <p>Exported SVG files contain single-line vector paths perfect for plotting. Choose to keep original text visible (light gray) for reference or hide it completely.</p>
+    
+    <h3 style="margin: 15px 0 10px 0; color: #333;">Credits & Attribution</h3>
+    <p style="font-size: 12px; line-height: 1.4;">
+      <strong>Built with:</strong><br>
+      • <a href="https://p5js.org/" target="_blank" style="color: #007bff;">p5.js</a> - Creative coding library by the Processing Foundation<br>
+      • <a href="https://github.com/zenozeng/p5.js-svg" target="_blank" style="color: #007bff;">p5.js-svg</a> - SVG renderer by Zeno Zeng<br><br>
+      
+      <strong>Single-line fonts:</strong><br>
+      • <strong>EMS Fonts</strong> - Emergency Medical Services single-line fonts<br>
+      • <strong>Hershey Fonts</strong> - Dr. A.V. Hershey's original vector fonts (1967)<br>
+      • <strong>Relief Fonts</strong> - Single-line relief engraving fonts<br><br>
+      
+      <strong>Inspiration & Community:</strong><br>
+      • <a href="https://github.com/golanlevin/p5-single-line-font-resources" target="_blank" style="color: #007bff;">p5-single-line-font-resources</a> - Comprehensive single-line font collection by Golan Levin<br>
+      • <a href="https://github.com/cadin/plotter-text" target="_blank" style="color: #007bff;">plotter-text</a> - Processing library for single-stroke text by Cadin Batrack<br>
+      • The broader pen plotting and creative coding community<br><br>
+      
+      <strong>Additional Font Resources:</strong><br>
+      • <a href="https://gitlab.com/oskay/svg-fonts" target="_blank" style="color: #007bff;">Evil Mad Scientist SVG Fonts</a> - Extended collection of single-line fonts by Windell Oskay<br><br>
+      
+      <em>These fonts are specifically designed for pen plotters, laser engravers, and CNC machines that require single-line vector paths.</em>
+    </p>
   `);
   
   let howToVisible = false;
@@ -285,17 +307,11 @@ function setup() {
     textInput.style('text-align', 'center');
     textInput.style('margin', '0 5px');
     
-    let value = createSpan(defaultVal);
-    value.parent(container);
-    value.style('min-width', '40px');
-    value.style('font-size', '13px');
-    value.style('font-weight', 'bold');
-    
     // Update from slider
     slider.input(() => {
       const val = slider.value();
       textInput.value(val);
-      updateFunc(slider, value);
+      updateFunc(slider, {html: () => {}});
     });
     
     // Update from text input (allows going beyond slider range)
@@ -307,7 +323,7 @@ function setup() {
           slider.value(val);
         }
         // Always update the display and trigger update function
-        updateFunc({value: () => val}, value);
+        updateFunc({value: () => val}, {html: () => {}});
       }
     });
     
@@ -1887,6 +1903,3 @@ function transformGlyphPath(pathData, x, y, sca, unitsPerEm) {
   
   return transformedPath.trim();
 }
-
-
-
