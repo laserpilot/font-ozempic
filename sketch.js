@@ -1092,14 +1092,12 @@ function getTransformedBoundingBox(textElement) {
   const transformScaleY = textElement.transformScaleY || textElement.scaleY || 1;
   
   
-  // Calculate width using original fontSize, then apply transform scaling
+  // CRITICAL FIX: Use browser's actual text measurement for accurate positioning
+  // This ensures the bounding box matches where the browser actually renders the text
   let textWidth;
-  if (currentFont && currentFont.isReady()) {
-    textWidth = estimateTextWidth(textElement.content, originalFontSize);
-  } else {
-    // Fallback to simple estimation
-    textWidth = textElement.content.length * originalFontSize * 0.6;
-  }
+  
+  // Use browser's actual text measurement capabilities
+  textWidth = measureActualTextWidth(textElement.content, originalFontSize, textElement.fontFamily || 'sans-serif');
   
   // Apply transform scaling to get final visual size
   textWidth = textWidth * transformScaleX;
@@ -1128,7 +1126,7 @@ function getTransformedBoundingBox(textElement) {
   return bbox;
 }
 
-// Helper function to estimate text width using actual font metrics
+// Helper function to estimate text width using actual font metrics (for single-line font conversion)
 function estimateTextWidth(text, fontSize) {
   if (!currentFont || !currentFont.isReady()) {
     console.log(`Font not ready, using fallback width for "${text}"`);
@@ -1146,6 +1144,63 @@ function estimateTextWidth(text, fontSize) {
       // Fallback for missing glyphs
       totalWidth += (300 * scaleFactor * letterSpacing);
     }
+  }
+  
+  return totalWidth;
+}
+
+// Helper function to estimate text width using ORIGINAL font metrics (for text-anchor positioning)
+// This matches how the browser calculates text width for the original font
+// Use browser's actual text measurement for accurate width calculation
+function measureActualTextWidth(text, fontSize, fontFamily) {
+  // Create a temporary canvas to measure actual text width
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  // Set the font to match the original text exactly
+  ctx.font = `${fontSize}px ${fontFamily}`;
+  
+  // Measure the actual text width using the browser's text measurement
+  const metrics = ctx.measureText(text);
+  
+  return metrics.width;
+}
+
+function estimateOriginalFontWidth(text, fontSize) {
+  // Fallback function - use browser measurement instead
+  return measureActualTextWidth(text, fontSize, 'Yu Gothic UI, sans-serif');
+  
+  // Keep original estimation code as backup
+  let avgCharWidthRatio = 0.52; // Default average character width ratio
+  
+  // Adjust ratio based on common font families (if we can detect them)
+  // Yu Gothic UI is a relatively wide font, so we increase the ratio
+  avgCharWidthRatio = 0.56; // Slightly wider for Yu Gothic UI and similar fonts
+  
+  // Apply a more sophisticated character width estimation
+  let totalWidth = 0;
+  
+  for (const char of text) {
+    let charWidth;
+    
+    // Different character types have different widths
+    if (char === ' ') {
+      charWidth = fontSize * 0.28; // Space is narrower
+    } else if (char >= '0' && char <= '9') {
+      charWidth = fontSize * 0.58; // Numbers are typically monospace-like
+    } else if (char === '.' || char === ':' || char === ',') {
+      charWidth = fontSize * 0.28; // Punctuation is narrow
+    } else if (char === 'I' || char === 'i' || char === 'l' || char === '|') {
+      charWidth = fontSize * 0.28; // Thin characters
+    } else if (char === 'M' || char === 'W' || char === 'm' || char === 'w') {
+      charWidth = fontSize * 0.78; // Wide characters
+    } else if (char >= 'A' && char <= 'Z') {
+      charWidth = fontSize * 0.62; // Uppercase letters
+    } else {
+      charWidth = fontSize * avgCharWidthRatio; // Default character width
+    }
+    
+    totalWidth += charWidth;
   }
   
   return totalWidth;
@@ -1476,6 +1531,84 @@ function getCombinedTransform(element) {
 }
 
 // Helper function to get font size with CSS-aware priority
+function getTextAnchor(element, svgDoc) {
+  let textAnchor = 'start'; // default
+  
+  // Priority 1: CSS styles (highest priority)
+  const className = element.getAttribute("class");
+  if (className && svgDoc) {
+    const styleElement = svgDoc.querySelector("style");
+    if (styleElement) {
+      const cssContent = styleElement.textContent || "";
+      // Look for CSS rule matching the class
+      const classRegex = new RegExp(`\\.${className}\\s*\\{[^}]*text-anchor:\\s*(start|middle|end)[;}]`, 'i');
+      const match = cssContent.match(classRegex);
+      if (match) {
+        textAnchor = match[1].trim();
+        return textAnchor;
+      }
+    }
+  }
+  
+  // Priority 2: Inline style attribute
+  const style = element.getAttribute("style");
+  if (style) {
+    const styleMatch = style.match(/text-anchor:\s*(start|middle|end)/i);
+    if (styleMatch) {
+      textAnchor = styleMatch[1].trim();
+      return textAnchor;
+    }
+  }
+  
+  // Priority 3: text-anchor attribute
+  const textAnchorAttr = element.getAttribute("text-anchor");
+  if (textAnchorAttr) {
+    textAnchor = textAnchorAttr;
+    return textAnchor;
+  }
+  
+  return textAnchor;
+}
+
+function getFontFamily(element, svgDoc) {
+  let fontFamily = 'sans-serif'; // default
+  
+  // Priority 1: CSS styles (highest priority)
+  const className = element.getAttribute("class");
+  if (className && svgDoc) {
+    const styleElement = svgDoc.querySelector("style");
+    if (styleElement) {
+      const cssContent = styleElement.textContent || "";
+      // Look for CSS rule matching the class
+      const classRegex = new RegExp(`\\.${className}\\s*\\{[^}]*font-family:\\s*([^;}]+)[;}]`, 'i');
+      const match = cssContent.match(classRegex);
+      if (match) {
+        fontFamily = match[1].trim();
+        return fontFamily;
+      }
+    }
+  }
+  
+  // Priority 2: Inline style attribute
+  const style = element.getAttribute("style");
+  if (style) {
+    const styleMatch = style.match(/font-family:\s*([^;]+)/i);
+    if (styleMatch) {
+      fontFamily = styleMatch[1].trim();
+      return fontFamily;
+    }
+  }
+  
+  // Priority 3: font-family attribute
+  const fontFamilyAttr = element.getAttribute("font-family");
+  if (fontFamilyAttr) {
+    fontFamily = fontFamilyAttr;
+    return fontFamily;
+  }
+  
+  return fontFamily;
+}
+
 function getFontSize(element, svgDoc) {
   let fontSize = 14; // default
   
@@ -1548,36 +1681,18 @@ function parseTargetSvg() {
         // PURE COORDINATE SYSTEM: Store original fontSize and transform scales separately
         // const finalFontSize = fontSize * combinedTransform.scaleY; // OLD: Pre-scaling caused double scaling
         
-        // Check for existing text-anchor attribute (check style first, then attributes)
-        let textAnchor = "start";
-        
-        // Check tspan style first
-        const tspanStyle = tspan.getAttribute("style") || "";
-        if (tspanStyle.includes("text-anchor:")) {
-          const match = tspanStyle.match(/text-anchor:\s*(start|middle|end)/);
-          if (match) {
-            textAnchor = match[1];
-          }
-        }
-        // Check parent text node style
-        else if (textNode.getAttribute("style") && textNode.getAttribute("style").includes("text-anchor:")) {
-          const match = textNode.getAttribute("style").match(/text-anchor:\s*(start|middle|end)/);
-          if (match) {
-            textAnchor = match[1];
-          }
-        }
-        // Check attributes as fallback
-        else {
-          textAnchor = tspan.getAttribute("text-anchor") || textNode.getAttribute("text-anchor") || "start";
-        }
+        // Use CSS-aware text-anchor detection with proper priority
+        const textAnchor = getTextAnchor(tspan, svgDoc) || getTextAnchor(textNode, svgDoc);
         
         if (textContent && textContent.trim() !== "") {
-          console.log(`Adding tspan: "${textContent.trim()}" at (${finalX}, ${finalY}), fontSize: ${fontSize}, textAnchor: ${textAnchor}`);
+          const fontFamily = getFontFamily(tspan, svgDoc) || getFontFamily(textNode, svgDoc);
+          console.log(`Adding tspan: "${textContent.trim()}" at (${finalX}, ${finalY}), fontSize: ${fontSize}, fontFamily: ${fontFamily}, textAnchor: ${textAnchor}`);
           textElements.push({
             content: textContent.trim(),
             x: finalX,
             y: finalY,
             fontSize: fontSize, // Store original, unscaled fontSize
+            fontFamily: fontFamily, // Store font family from CSS/attributes
             transformScaleX: combinedTransform.scaleX, // Store transform scales separately
             transformScaleY: combinedTransform.scaleY,
             className: className,
@@ -1605,24 +1720,18 @@ function parseTargetSvg() {
       // PURE COORDINATE SYSTEM: Store original fontSize and transform scales separately
       // const finalFontSize = fontSize * combinedTransform.scaleY; // OLD: Pre-scaling caused double scaling
       
-      // Check for existing text-anchor attribute (check style first, then attributes)
-      let textAnchor = "start";
-      const nodeStyle = textNode.getAttribute("style") || "";
-      if (nodeStyle.includes("text-anchor:")) {
-        const match = nodeStyle.match(/text-anchor:\s*(start|middle|end)/);
-        if (match) {
-          textAnchor = match[1];
-        }
-      } else {
-        textAnchor = textNode.getAttribute("text-anchor") || "start";
-      }
+      // Use CSS-aware text-anchor detection with proper priority
+      const textAnchor = getTextAnchor(textNode, svgDoc);
       
       if (textContent && textContent.trim() !== "") {
+        const fontFamily = getFontFamily(textNode, svgDoc);
+        console.log(`Adding text: "${textContent.trim()}" at (${finalX}, ${finalY}), fontSize: ${fontSize}, fontFamily: ${fontFamily}, textAnchor: ${textAnchor}`);
         textElements.push({
           content: textContent.trim(),
           x: finalX,
           y: finalY,
           fontSize: fontSize, // Store original, unscaled fontSize
+          fontFamily: fontFamily, // Store font family from CSS/attributes
           transformScaleX: combinedTransform.scaleX, // Store transform scales separately
           transformScaleY: combinedTransform.scaleY,
           className: className,
