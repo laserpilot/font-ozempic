@@ -205,7 +205,7 @@ Prepare text for laser engraving with clean single-line fonts.
 - **[p5.js-svg](https://github.com/zenozeng/p5.js-svg)** - SVG renderer by Zeno Zeng
 
 ### Single-Line Fonts
-- **EMS Fonts** - Emergency Medical Services single-line fonts
+- **EMS Fonts** - Evil Mad Scientist single-line fonts
 - **Hershey Fonts** - Dr. A.V. Hershey's original vector fonts (1967)
 - **Relief Fonts** - Single-line relief engraving fonts
 

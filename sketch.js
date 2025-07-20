@@ -1099,8 +1099,17 @@ function getTransformedBoundingBox(textElement) {
   // Use browser's actual text measurement capabilities with all font properties
   const fontWeight = textElement.fontWeight || 'normal';
   const fontStyle = textElement.fontStyle || 'normal';
-  const letterSpacing = textElement.letterSpacing || 'normal';
-  textWidth = measureActualTextWidth(textElement.content, originalFontSize, textElement.fontFamily || 'sans-serif', fontWeight, fontStyle, letterSpacing);
+  const cssLetterSpacing = textElement.cssLetterSpacing || 'normal';
+  textWidth = measureActualTextWidth(textElement.content, originalFontSize, textElement.fontFamily || 'sans-serif', fontWeight, fontStyle, cssLetterSpacing);
+  
+  // Apply UI letter spacing control (this affects the final converted text width)
+  // Calculate additional width from UI letter spacing multiplier
+  if (letterSpacing !== 1.0 && textElement.content.length > 1) {
+    // Estimate the base character width for letter spacing calculation
+    const baseCharWidth = textWidth / textElement.content.length;
+    const additionalSpacing = baseCharWidth * (letterSpacing - 1.0) * (textElement.content.length - 1);
+    textWidth += additionalSpacing;
+  }
   
   // Apply transform scaling to get final visual size
   textWidth = textWidth * transformScaleX;
@@ -1826,8 +1835,8 @@ function parseTargetSvg() {
           const fontFamily = getFontFamily(tspan, svgDoc) || getFontFamily(textNode, svgDoc);
           const fontWeight = getFontWeight(tspan, svgDoc) || getFontWeight(textNode, svgDoc);
           const fontStyle = getFontStyle(tspan, svgDoc) || getFontStyle(textNode, svgDoc);
-          const letterSpacing = getLetterSpacing(tspan, svgDoc) || getLetterSpacing(textNode, svgDoc);
-          console.log(`Adding tspan: "${textContent.trim()}" at (${finalX}, ${finalY}), fontSize: ${fontSize}, fontFamily: ${fontFamily}, fontWeight: ${fontWeight}, fontStyle: ${fontStyle}, letterSpacing: ${letterSpacing}, textAnchor: ${textAnchor}`);
+          const cssLetterSpacing = getLetterSpacing(tspan, svgDoc) || getLetterSpacing(textNode, svgDoc);
+          console.log(`Adding tspan: "${textContent.trim()}" at (${finalX}, ${finalY}), fontSize: ${fontSize}, fontFamily: ${fontFamily}, fontWeight: ${fontWeight}, fontStyle: ${fontStyle}, cssLetterSpacing: ${cssLetterSpacing}, textAnchor: ${textAnchor}`);
           textElements.push({
             content: textContent.trim(),
             x: finalX,
@@ -1836,7 +1845,7 @@ function parseTargetSvg() {
             fontFamily: fontFamily, // Store font family from CSS/attributes
             fontWeight: fontWeight, // Store font weight from CSS/attributes
             fontStyle: fontStyle, // Store font style from CSS/attributes
-            letterSpacing: letterSpacing, // Store letter spacing from CSS/attributes
+            cssLetterSpacing: cssLetterSpacing, // Store CSS letter spacing (separate from UI control)
             transformScaleX: combinedTransform.scaleX, // Store transform scales separately
             transformScaleY: combinedTransform.scaleY,
             className: className,
@@ -1871,8 +1880,8 @@ function parseTargetSvg() {
         const fontFamily = getFontFamily(textNode, svgDoc);
         const fontWeight = getFontWeight(textNode, svgDoc);
         const fontStyle = getFontStyle(textNode, svgDoc);
-        const letterSpacing = getLetterSpacing(textNode, svgDoc);
-        console.log(`Adding text: "${textContent.trim()}" at (${finalX}, ${finalY}), fontSize: ${fontSize}, fontFamily: ${fontFamily}, fontWeight: ${fontWeight}, fontStyle: ${fontStyle}, letterSpacing: ${letterSpacing}, textAnchor: ${textAnchor}`);
+        const cssLetterSpacing = getLetterSpacing(textNode, svgDoc);
+        console.log(`Adding text: "${textContent.trim()}" at (${finalX}, ${finalY}), fontSize: ${fontSize}, fontFamily: ${fontFamily}, fontWeight: ${fontWeight}, fontStyle: ${fontStyle}, cssLetterSpacing: ${cssLetterSpacing}, textAnchor: ${textAnchor}`);
         textElements.push({
           content: textContent.trim(),
           x: finalX,
@@ -1881,7 +1890,7 @@ function parseTargetSvg() {
           fontFamily: fontFamily, // Store font family from CSS/attributes
           fontWeight: fontWeight, // Store font weight from CSS/attributes
           fontStyle: fontStyle, // Store font style from CSS/attributes
-          letterSpacing: letterSpacing, // Store letter spacing from CSS/attributes
+          cssLetterSpacing: cssLetterSpacing, // Store CSS letter spacing (separate from UI control)
           transformScaleX: combinedTransform.scaleX, // Store transform scales separately
           transformScaleY: combinedTransform.scaleY,
           className: className,
